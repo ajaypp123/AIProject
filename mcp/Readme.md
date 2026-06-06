@@ -108,11 +108,14 @@ uv init flight-booking-server
 # Check flight-booking-server server.py example
 cd flight-booking-server
 uv add "mcp[cli]"
+# uv tool install mcp[cli] # install globally
 ```
 
 - start mcp server with instecter
 ```sh
-mcp dev server.py
+mcp dev server.py # if mcp installed globally
+or
+uv run mcp dev server.py
 ```
 
 - start mcp server using streamable-http

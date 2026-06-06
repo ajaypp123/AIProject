@@ -1,0 +1,9 @@
+[project]
+name = "flight-booking-server"
+version = "0.1.0"
+description = "Flight Booking mcp server"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "mcp[cli]>=1.27.2",
+]
