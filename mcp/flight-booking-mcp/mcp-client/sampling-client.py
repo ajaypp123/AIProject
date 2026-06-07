@@ -7,56 +7,51 @@ from mcp.client.session import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import CreateMessageRequestParams, CreateMessageResult, TextContent
 
-async def handle_sampling(context, params: CreateMessageRequestParams) -> CreateMessageResult:
-    """Handle sampling requests from server - provide simulated LLM responses"""
-    print("🤖 Server requests LLM generation!")
+async def llm_handler(context, params):
+    """
+    Handles sampling/createMessage requests from the server.
+    """
 
-    # Extract the prompt from the message chain
-    messages = params.messages
-    user_messages = [msg for msg in messages if msg.role == "user"]
+    print("\n=== Sampling Request Received ===")
 
-    if user_messages:
-        # Get the last user message as the prompt
-        prompt = user_messages[-1].content.text if hasattr(user_messages[-1].content, 'text') else str(user_messages[-1].content)
-        print(f"📝 Prompt: {prompt}")
+    prompt = ""
 
-        # Generate contextual responses based on prompt content
-        if "poem" in prompt.lower():
-            response = """Here's a poem about travel:
+    for msg in params.messages:
+        if hasattr(msg.content, "text"):
+            prompt += msg.content.text
 
-Flying high above the clouds so white,
-Adventure calls from left and right,
-Booking flights with digital ease,
-Exploring worlds across the seas."""
-        elif "explain" in prompt.lower() and ("flight" in prompt.lower() or "travel" in prompt.lower()):
-            response = """Flight booking systems help travelers find and reserve airline seats. They connect to airline databases, compare prices, check availability, and handle payments. Modern systems use APIs to provide real-time information and seamless booking experiences."""
-        elif "story" in prompt.lower():
-            response = """Once upon a time, there was a traveler named Sam who used an innovative flight booking system. With just a few clicks, Sam found the perfect flight, selected a window seat, and received instant confirmation. The journey that followed was filled with wonder and adventure."""
-        elif "recommend" in prompt.lower() or "suggest" in prompt.lower():
-            response = """Based on your preferences, I recommend:
-1. Book flights in advance for better prices
-2. Consider flexible dates for more options
-3. Check multiple airlines for the best deals
-4. Look into travel insurance for peace of mind
-5. Arrive at the airport with plenty of time"""
-        else:
-            response = f"Here's a helpful response about flight booking and travel: {prompt}"
+    print(f"Prompt: {prompt}")
 
-        print(f"🎭 Generated response: {response[:100]}...")
+    generated_text = """
+Flight Booking Application
 
-        return CreateMessageResult(
-            role="assistant",
-            content=TextContent(type="text", text=response),
-            model="simulated-llm",
-            stopReason="endTurn"
-        )
+A flight booking application enables users to search, compare,
+and reserve airline tickets.
 
-    # Fallback response
+Key Features:
+- Search flights by source, destination, and travel date
+- Compare fares across airlines
+- Book one-way or round-trip journeys
+- Manage bookings and cancellations
+- Secure online payment integration
+- Real-time flight status updates
+
+Benefits:
+- Convenient ticket booking
+- Faster reservation process
+- Centralized booking management
+- Better customer experience
+"""
+
+    print("Returning mock LLM response...")
+
     return CreateMessageResult(
         role="assistant",
-        content=TextContent(type="text", text="I couldn't generate a response for that request."),
-        model="simulated-llm",
-        stopReason="endTurn"
+        content=TextContent(
+            type="text",
+            text=generated_text
+        ),
+        model="mock-flight-model"
     )
 
 async def test_sampling():
@@ -69,7 +64,7 @@ async def test_sampling():
     try:
         async with streamablehttp_client("http://localhost:8000/mcp/") as (read, write, _):
             # Connect with sampling support
-            async with ClientSession(read, write, sampling_callback=handle_sampling) as client:
+            async with ClientSession(read, write, sampling_callback=llm_handler) as client:
                 await client.initialize()
                 print("✅ Connected to server with sampling support!")
                 print()
@@ -95,10 +90,10 @@ async def test_sampling():
                 # Test existing prompts (they might trigger sampling internally)
                 try:
                     print("💡 Testing flight recommendation prompt...")
-                    prompt_result = await client.get_prompt("find_best_flight", {
-                        "budget": "800.0",  # Changed from 800.0 to "800.0"
-                        "preferences": "business class, direct flight"
-                    })
+                    prompt_result = await client.call_tool("generate_samples",
+                        { "topic": "Flight Booking System" })
+
+                    print(f"prompt result: {prompt_result}")
                     print("✅ Prompt generated successfully (no sampling required)")
                     print()
                 except Exception as e:
@@ -106,10 +101,7 @@ async def test_sampling():
                     print()
 
                 # Demonstrate sampling capability
-                print("🎭 Sampling callback is ready!")
-                print("   If the server had tools that use ctx.session.create_message(),")
-                print("   our sampling callback would handle those requests.")
-                print()
+
                 print("📋 Sampling callback features:")
                 print("   - Handles travel explanation requests")
                 print("   - Provides travel/flight explanations")

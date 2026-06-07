@@ -14,7 +14,8 @@ async def handle_elicitation(context, params: ElicitRequestParams) -> ElicitResu
 
     # Request actual user input
     try:
-        user_response = input("👤 Please enter your response: ").strip()
+        # Provide below user input from user
+        user_response = '{"name": "John", "age": 30}'
 
         if not user_response:
             print("⚠️ No input provided, declining request")
@@ -96,23 +97,16 @@ async def test_elicitation():
                 print("🧪 Testing for potential elicitation triggers...")
 
                 try:
-                    print("🎫 Testing booking creation (might ask for user details)...")
-                    booking_result = await client.call_tool("create_booking", {
-                        "flight_id": "FL456",
-                        "passenger_name": "Test User"
-                    })
-                    if booking_result.content and len(booking_result.content) > 0:
-                        print(f"✅ Booking result: {booking_result.content[0].text}")
+                    print("🎫 Testing ask_user_info elicitation...")
+                    ask_result = await client.call_tool("ask_user_info", {})
+                    if ask_result.content and len(ask_result.content) > 0:
+                        print(f"✅ Booking result: {ask_result.content[0].text}")
                     print()
                 except Exception as e:
-                    print(f"⚠️  Booking test: {e}")
+                    print(f"⚠️  ask_result: {e}")
                     print()
 
                 # Demonstrate elicitation capability
-                print("🔔 Elicitation callback is ready!")
-                print("   If the server had tools that use ctx.session.elicit(),")
-                print("   our elicitation callback would handle those requests.")
-                print()
                 print("📋 Elicitation callback features:")
                 print("   - Prompts user for real input when server requests")
                 print("   - Handles text responses and JSON input")

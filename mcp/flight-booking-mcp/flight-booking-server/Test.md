@@ -31,4 +31,7 @@ uv run mcp dev server.py
 }
 ```
 
-- attach server to agent
+- kill server
+```sh
+kill -9 $(lsof -t -i:8000)
+```
