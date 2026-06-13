@@ -1,5 +1,5 @@
 # Ide
-.vscode
+.vscode/
 
 # Python-generated files
 __pycache__/
@@ -11,3 +11,6 @@ wheels/
 
 # Virtual environments
 .venv
+.github
+
+.env
