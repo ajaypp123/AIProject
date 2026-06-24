@@ -49,7 +49,7 @@ def test_basic_llm_call():
 
         # Create client with environment variables
         llm = ChatOpenAI(
-            model="openai/gpt-4.1-mini",
+            model=os.getenv("OPENAI_API_MODEL"),
             temperature=0
         )
 
@@ -94,8 +94,8 @@ def main():
         print("Your prompt engineering lab environment is ready.")
 
         # Create success marker
-        os.makedirs("/root/markers", exist_ok=True)
-        with open("/root/markers/environment_verified.txt", "w") as f:
+        os.makedirs("/tmp/markers", exist_ok=True)
+        with open("/tmp/markers/environment_verified.txt", "w") as f:
             f.write("ENVIRONMENT_VERIFIED")
 
         return True

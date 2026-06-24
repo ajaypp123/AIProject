@@ -14,3 +14,6 @@ wheels/
 .github
 
 .env
+
+# AI
+chroma_db/

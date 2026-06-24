@@ -16,7 +16,7 @@ def main():
 
     # Initialize LLM
     llm = ChatOpenAI(
-        model="openai/gpt-4.1-mini",
+        model=os.getenv("OPENAI_API_MODEL"),
         api_key=os.getenv("OPENAI_API_KEY"),
         base_url=os.getenv("OPENAI_API_BASE"),
         temperature=0.7
@@ -26,7 +26,7 @@ def main():
     print("-" * 40)
 
     # TODO 1: Provide an example policy format
-    example_policy = """___"""  # Replace ___ with: "REFUND POLICY\n1. Eligibility: Within 30 days of purchase\n2. Conditions: Product unused and in original packaging\n3. Process: Submit request via support@company.com\n4. Timeline: Refund processed within 5-7 business days\n5. Exceptions: Digital products and custom orders non-refundable"
+    example_policy = """REFUND POLICY\n1. Eligibility: Within 30 days of purchase\n2. Conditions: Product unused and in original packaging\n3. Process: Submit request via support@company.com\n4. Timeline: Refund processed within 5-7 business days\n5. Exceptions: Digital products and custom orders non-refundable"""  # Replace ___ with: "REFUND POLICY\n1. Eligibility: Within 30 days of purchase\n2. Conditions: Product unused and in original packaging\n3. Process: Submit request via support@company.com\n4. Timeline: Refund processed within 5-7 business days\n5. Exceptions: Digital products and custom orders non-refundable"
 
     print("📋 Example provided:")
     print(example_policy)
@@ -38,7 +38,7 @@ def main():
 {example}
 
 Now write a {policy_type} policy following this EXACT format with numbered sections:""",
-        input_variables=["___", "___"]  # Replace ___ with: "example", "policy_type"
+        input_variables=["example", "policy_type"]  # Replace ___ with: "example", "policy_type"
     )
 
     print("\n🔄 Testing One-Shot Prompting")
@@ -48,7 +48,7 @@ Now write a {policy_type} policy following this EXACT format with numbered secti
     # Format the prompt with our example and new policy type
     formatted_prompt = one_shot_template.format(
         example=example_policy,
-        policy_type="___"  # Replace ___ with: "remote work"
+        policy_type="remote work"  # Replace ___ with: "remote work"
     )
 
     print(f"📤 Sending one-shot prompt for: remote work policy")
@@ -80,8 +80,8 @@ Now write a {policy_type} policy following this EXACT format with numbered secti
     print("  ✓ Maintains company standards")
 
     # Create marker for completion
-    os.makedirs("/root/markers", exist_ok=True)
-    with open("/root/markers/task2_complete.txt", "w") as f:
+    os.makedirs("/tmp/markers", exist_ok=True)
+    with open("/tmp/markers/task2_complete.txt", "w") as f:
         f.write("COMPLETED")
 
     print("\n✅ Task 2 completed! One-shot prompting mastered!")

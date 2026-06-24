@@ -25,7 +25,7 @@ def smart_chunk_document(text, overlap_ratio=0.2):
     """
     # TODO 1: Split document into paragraphs
     # Hint: Use text.split("\n\n") to split by double newlines
-    paragraphs = text.split("___")  # Replace ___ with "\n\n"
+    paragraphs = text.split("\n\n")  # Replace ___ with "\n\n"
 
     chunks = []
     for i in range(len(paragraphs)):
@@ -41,7 +41,7 @@ def smart_chunk_document(text, overlap_ratio=0.2):
         # TODO 2: Calculate overlap characters (20% of previous paragraph)
         # Hint: Use int(len(paragraphs[i-1]) * overlap_ratio)
         if i > 0 and overlap_ratio > 0:
-            overlap_chars = int(len(paragraphs[i-1]) * ___)  # Replace ___ with overlap_ratio
+            overlap_chars = int(len(paragraphs[i-1]) * overlap_ratio)  # Replace ___ with overlap_ratio
             if overlap_chars > 0:
                 chunk_parts.insert(0, paragraphs[i-1][-overlap_chars:])
 
@@ -51,7 +51,7 @@ def smart_chunk_document(text, overlap_ratio=0.2):
     return chunks
 
 # Process documents
-doc_dir = Path("/root/techcorp-docs")
+doc_dir = Path("/tmp/techcorp-docs")
 total_chunks = 0
 docs_processed = 0
 
@@ -63,8 +63,8 @@ for category_dir in doc_dir.iterdir():
             # TODO 3: Create metadata for document tracking
             # Hint: Use doc_file.name for source, category_dir.name for section
             metadata = {
-                "source": ___,  # Replace ___ with doc_file.name
-                "section": ___  # Replace ___ with category_dir.name
+                "source": doc_file.name,  # Replace ___ with doc_file.name
+                "section": category_dir.name  # Replace ___ with category_dir.name
             }
 
             # Read and process document
@@ -98,8 +98,8 @@ print(f"   - Collection size: {collection.count()}")
 print("=" * 50)
 
 # Create marker file
-os.makedirs("/root/markers", exist_ok=True)
-with open("/root/markers/task2_processing_complete.txt", "w") as f:
+os.makedirs("/tmp/markers", exist_ok=True)
+with open("/tmp/markers/task2_processing_complete.txt", "w") as f:
     f.write(f"TASK2_COMPLETE:DOCS={docs_processed},CHUNKS={total_chunks}")
 
 print("\n💡 Smart chunking preserves context for better generation!")

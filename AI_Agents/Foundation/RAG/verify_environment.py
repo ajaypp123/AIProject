@@ -53,9 +53,9 @@ def check_openai_config():
 
 def check_documents():
     """Check if TechCorp documents exist"""
-    doc_dir = "/root/techcorp-docs"
+    doc_dir = "/tmp/techcorp-docs"
     if os.path.exists(doc_dir):
-        doc_count = sum(1 for root, dirs, files in os.walk(doc_dir) for file in files if file.endswith('.md'))
+        doc_count = sum(1 for tmp, dirs, files in os.walk(doc_dir) for file in files if file.endswith('.md'))
         print(f"✅ TechCorp documents found: {doc_count} files")
         return True
     else:
@@ -96,8 +96,8 @@ def main():
         status = "INCOMPLETE"
 
     # Create marker file
-    os.makedirs("/root/markers", exist_ok=True)
-    with open("/root/markers/environment_verified.txt", "w") as f:
+    os.makedirs("/tmp/markers", exist_ok=True)
+    with open("/tmp/markers/environment_verified.txt", "w") as f:
         f.write(f"ENV_STATUS:{status}")
 
     print(f"\n📊 Status: {status}")

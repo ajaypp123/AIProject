@@ -19,7 +19,7 @@ def main():
 
     # Initialize LLM
     llm = ChatOpenAI(
-        model="openai/gpt-4.1-mini",
+        model=os.getenv("OPENAI_API_MODEL"),
         api_key=os.getenv("OPENAI_API_KEY"),
         base_url=os.getenv("OPENAI_API_BASE"),
         temperature=0.7
@@ -62,8 +62,8 @@ def main():
     print("  ✓ Specify requirements (retention, rights)")
 
     # Create marker for completion
-    os.makedirs("/root/markers", exist_ok=True)
-    with open("/root/markers/task1_complete.txt", "w") as f:
+    os.makedirs("/tmp/markers", exist_ok=True)
+    with open("/tmp/markers/task1_complete.txt", "w") as f:
         f.write("COMPLETED")
 
     print("\n✅ Task 1 completed! Zero-shot prompting mastered!")
