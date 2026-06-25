@@ -1,0 +1,30 @@
+{
+  "application": "pi-calculator",
+  "namespace": "spark",
+  "failureSummary": "Spark application 'pi-calculator' in namespace 'spark' is in state 'FAILED'. Detected 3 issue(s). Top issue: Executor OOM (critical). Total container restarts: 2.",
+  "likelyRootCause": "Executor OOM: Executor killed due to out-of-memory",
+  "confidence": 0.85,
+  "evidence": [
+    "Pod/exec-1: OOMKilled - Container killed due to memory limit",
+    "Log match: OutOfMemoryError",
+    "Log match: ExecutorLost"
+  ],
+  "failureScore": 90,
+  "clusterHealthScore": 65,
+  "recommendations": [
+    {
+      "priority": 1,
+      "action": "Executor OOM",
+      "description": "Increase executor memory (spark.executor.memory) and memory overhead (spark.executor.memoryOverhead). Reduce partition size or enable spill.",
+      "docLink": "https://spark.apache.org/docs/latest/configuration.html#memory-management"
+    }
+  ],
+  "matchedRules": [
+    {
+      "id": "R001",
+      "name": "Executor OOM",
+      "severity": "critical",
+      "score": 90
+    }
+  ]
+}
