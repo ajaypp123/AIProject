@@ -1,0 +1,51 @@
+# Build artifacts
+api/spark-rag-api
+ui/build
+ui/node_modules
+ui/.env.local
+
+# Python
+ingestor/__pycache__
+ingestor/*.pyc
+ingestor/venv
+ingestor/.pytest_cache
+ingestor/.ingestor.json
+ingestor/.coverage
+ingestor/htmlcov
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+.tmp
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker
+
+# Data
+data/*/
+!data/.gitkeep
+
+# Cache
+.cache
+.pytest_cache
+.turbo
+
+# Testing
+coverage/
+*.prof
