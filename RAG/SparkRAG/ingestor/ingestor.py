@@ -1,6 +1,8 @@
+import argparse
 import logging
 import json
 import os
+import logging
 import hashlib
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -24,9 +26,10 @@ class Ingestor:
         )
         self.embedding_provider = get_embedding_provider(
             config.embedding.provider,
-            base_url=config.embedding.api_key if config.embedding.provider == "ollama" else None,
+            base_url=getattr(config.embedding, 'url', None),
             model=config.embedding.model,
-            api_key=config.embedding.api_key if config.embedding.provider == "openai" else None
+            api_key=getattr(config.embedding, 'api_key', None),
+            allow_fallback=getattr(config.embedding, 'allow_fallback', False)
         )
         self.vectordb_client = get_vectordb_client(
             config.vectordb.provider,
@@ -60,36 +63,36 @@ class Ingestor:
             logger.error(f"Failed to compute hash for {file_path}: {e}")
             return ""
 
-    def ingest_document(self, file_path: str, metadata: Optional[Dict] = None) -> bool:
+    def ingest_document(self, file_path: str) -> bool:
         file_path = str(file_path)
         file_hash = self._compute_file_hash(file_path)
-        
+
         if not file_hash:
             return False
-        
+
         if file_path in self.checkpoint["documents"]:
             if self.checkpoint["documents"][file_path].get("hash") == file_hash:
                 logger.info(f"Skipping {file_path} (already indexed)")
                 return True
-        
+
         loader = DocumentLoader()
         doc = loader.load(file_path)
-        
+
         if not doc:
             logger.warning(f"Failed to load document: {file_path}")
             return False
-        
+
         chunks = self.chunker.chunk_text(doc.content)
-        
+
         chunk_data = []
         for i, chunk_content in enumerate(chunks):
             chunk_id = str(uuid4())
             embedding = self.embedding_provider.embed(chunk_content)
-            
+
             if embedding is None:
                 logger.error(f"Failed to embed chunk {i} from {file_path}")
                 return False
-            
+
             chunk_obj = {
                 "id": chunk_id,
                 "document_id": doc.id,
@@ -99,11 +102,11 @@ class Ingestor:
                 "document_type": doc.metadata.get("document_type", "unknown"),
             }
             chunk_data.append(chunk_obj)
-        
+
         if not self.vectordb_client.store_chunks(chunk_data):
             logger.error(f"Failed to store chunks for {file_path}")
             return False
-        
+
         self.checkpoint["documents"][file_path] = {
             "hash": file_hash,
             "chunks": len(chunk_data),
@@ -111,7 +114,7 @@ class Ingestor:
             "document_id": doc.id,
         }
         self._save_checkpoint()
-        
+
         logger.info(f"Ingested {file_path} with {len(chunk_data)} chunks")
         return True
 
@@ -122,53 +125,95 @@ class Ingestor:
             "failed": 0,
             "skipped": 0,
         }
-        
-        docs = load_documents_from_directory(directory)
-        
-        for doc in docs:
+        logging.info(f"Checking all document in provided path {directory}.")
+        documents = []
+        directory_path = Path(directory)
+
+        if not directory_path.is_dir():
+            logger.warning(f"Directory not found: {directory}")
+            return documents
+
+        for file_path in directory_path.rglob('*'):
             stats["total_files"] += 1
-            if self.ingest_document(doc.id):
-                stats["successful"] += 1
-            else:
-                stats["failed"] += 1
-        
+            if file_path.is_file():
+                if file_path.suffix.lower() not in DocumentLoader.SUPPORTED_TYPES:
+                    logging.warning(f"Skipping, {file_path}")
+                    stats["skipped"] += 1
+                    continue
+                logging.info(f"Please wait, ingesting document {file_path}")
+                if file_path and self.ingest_document(file_path):
+                    logging.debug(f"Successfully ingested document {file_path}")
+                    stats["successful"] += 1
+                else:
+                    logging.warning(f"Failed ingesting document {file_path}")
+                    stats["failed"] += 1
+
         return stats
 
     def health_check(self) -> bool:
         return self.vectordb_client.health_check()
 
     def delete_document(self, doc_id: str) -> bool:
-        if self.vectordb_client.delete_document(doc_id):
-            if doc_id in self.checkpoint["documents"]:
-                del self.checkpoint["documents"][doc_id]
+        # Accept either a file path (checkpoint key) or a document id stored in checkpoint
+        # If a file path is provided, resolve the document_id from the checkpoint
+        document_id = doc_id
+        file_key = None
+        if doc_id in self.checkpoint.get("documents", {}):
+            # doc_id is a file path key
+            file_key = doc_id
+            document_id = self.checkpoint["documents"][doc_id].get("document_id")
+
+        if not document_id:
+            logger.warning(f"Document id not found for {doc_id}")
+            return False
+
+        if self.vectordb_client.delete_document(document_id):
+            if file_key:
+                del self.checkpoint["documents"][file_key]
                 self._save_checkpoint()
+            else:
+                # remove any checkpoint entries matching this document_id
+                to_delete = [k for k, v in self.checkpoint.get("documents", {}).items() if v.get("document_id") == document_id]
+                for k in to_delete:
+                    del self.checkpoint["documents"][k]
+                if to_delete:
+                    self._save_checkpoint()
             return True
         return False
 
-def main():
-    import logging.config
-    
+def main(config_file):
+    config = IngestorConfig(config_file)
+
     logging.basicConfig(
-        level=logging.INFO,
+        level=config.log_level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
-    
-    config = IngestorConfig()
-    
+
+    logger.info(f"Using config file: {config_file}")
+
     logger.info("Starting Spark RAG Ingestor")
     logger.info(f"Vector DB: {config.vectordb.provider} at {config.vectordb.url}")
     logger.info(f"Embedding: {config.embedding.provider} ({config.embedding.model})")
-    
+
     ingestor = Ingestor(config)
-    
+
     if not ingestor.health_check():
         logger.error("Vector database is not healthy. Exiting.")
         return
-    
+
     logger.info(f"Ingesting documents from {config.watch_dir}")
     stats = ingestor.ingest_directory(config.watch_dir)
-    
+
     logger.info(f"Ingestion complete: {stats}")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Spark RAG ingestor")
+    parser.add_argument(
+        "--config",
+        "--conf",
+        dest="config_file",
+        default=None,
+        help="Optional path to a YAML config file"
+    )
+    args = parser.parse_args()
+    main(args.config_file)

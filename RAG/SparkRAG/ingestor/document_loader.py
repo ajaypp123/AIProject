@@ -19,13 +19,13 @@ class DocumentLoader:
 
     def load(self, file_path: str) -> Optional[Document]:
         file_path = Path(file_path)
-        
+
         if not file_path.exists():
             logger.warning(f"File not found: {file_path}")
             return None
-        
+
         suffix = file_path.suffix.lower()
-        
+
         try:
             if suffix == '.pdf':
                 return self._load_pdf(file_path)
@@ -48,20 +48,25 @@ class DocumentLoader:
 
     def _load_pdf(self, file_path: Path) -> Optional[Document]:
         try:
-            from pypdf import PdfReader
+            try:
+                from pypdf import PdfReader
+            except ImportError:
+                logger.warning("PDF parsing requires 'pypdf'. Install with: pip install pypdf")
+                return None
+
             reader = PdfReader(str(file_path))
             content = ""
             for page_num, page in enumerate(reader.pages):
                 content += f"\n--- Page {page_num + 1} ---\n"
-                content += page.extract_text()
-            
+                content += page.extract_text() or ""
+
             metadata = {
                 "source": str(file_path),
                 "document_type": "pdf",
                 "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
                 "filename": file_path.name,
             }
-            
+
             return Document(
                 id=file_path.stem,
                 content=content,
@@ -75,14 +80,14 @@ class DocumentLoader:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             metadata = {
                 "source": str(file_path),
                 "document_type": "text",
                 "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
                 "filename": file_path.name,
             }
-            
+
             return Document(
                 id=file_path.stem,
                 content=content,
@@ -96,14 +101,14 @@ class DocumentLoader:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             metadata = {
                 "source": str(file_path),
                 "document_type": "markdown",
                 "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
                 "filename": file_path.name,
             }
-            
+
             return Document(
                 id=file_path.stem,
                 content=content,
@@ -120,7 +125,7 @@ class DocumentLoader:
                 reader = csv.DictReader(f)
                 for row in reader:
                     rows.append(row)
-            
+
             content = "CSV Data:\n"
             if rows:
                 content += "\nColumns: " + ", ".join(rows[0].keys()) + "\n"
@@ -128,7 +133,7 @@ class DocumentLoader:
                     content += f"\nRow {i+1}:\n"
                     for key, value in row.items():
                         content += f"  {key}: {value}\n"
-            
+
             metadata = {
                 "source": str(file_path),
                 "document_type": "csv",
@@ -136,7 +141,7 @@ class DocumentLoader:
                 "filename": file_path.name,
                 "row_count": len(rows),
             }
-            
+
             return Document(
                 id=file_path.stem,
                 content=content,
@@ -150,16 +155,16 @@ class DocumentLoader:
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            
+
             content = json.dumps(data, indent=2)
-            
+
             metadata = {
                 "source": str(file_path),
                 "document_type": "json",
                 "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
                 "filename": file_path.name,
             }
-            
+
             return Document(
                 id=file_path.stem,
                 content=content,
@@ -172,31 +177,31 @@ class DocumentLoader:
     def _load_html(self, file_path: Path) -> Optional[Document]:
         try:
             from html.parser import HTMLParser
-            
+
             class TextExtractor(HTMLParser):
                 def __init__(self):
                     super().__init__()
                     self.text = []
-                
+
                 def handle_data(self, data):
                     text = data.strip()
                     if text:
                         self.text.append(text)
-            
+
             with open(file_path, 'r', encoding='utf-8') as f:
                 html = f.read()
-            
+
             extractor = TextExtractor()
             extractor.feed(html)
             content = "\n".join(extractor.text)
-            
+
             metadata = {
                 "source": str(file_path),
                 "document_type": "html",
                 "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
                 "filename": file_path.name,
             }
-            
+
             return Document(
                 id=file_path.stem,
                 content=content,
@@ -209,18 +214,20 @@ class DocumentLoader:
 def load_documents_from_directory(directory: str) -> List[Document]:
     documents = []
     directory_path = Path(directory)
-    
+
     if not directory_path.is_dir():
         logger.warning(f"Directory not found: {directory}")
         return documents
-    
+
     loader = DocumentLoader()
-    
+
     for file_path in directory_path.rglob('*'):
         if file_path.is_file() and file_path.suffix.lower() in DocumentLoader.SUPPORTED_TYPES:
             doc = loader.load(str(file_path))
             if doc:
                 documents.append(doc)
                 logger.info(f"Loaded: {file_path.name}")
-    
+        else:
+            logging.warning(f"Skipping file {file_path} ...")
+
     return documents

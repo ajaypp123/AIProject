@@ -12,6 +12,7 @@ ingestor/.pytest_cache
 ingestor/.ingestor.json
 ingestor/.coverage
 ingestor/htmlcov
+.ingestor.json
 
 # IDE
 .vscode
@@ -24,6 +25,7 @@ ingestor/htmlcov
 .env
 .env.local
 .env.*.local
+.venv/
 
 # OS
 .DS_Store

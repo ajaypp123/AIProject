@@ -334,7 +334,7 @@ docker-compose down -v
 cd api
 
 # Run with default config
-go run . 
+go run .
 
 # Run with custom config
 go run . -config=config.prod.yaml
@@ -732,3 +732,11 @@ Apache 2.0
 ---
 
 **Built with ❤️ for the Apache Spark community**
+
+
+
+
+1. can you also provide HuggingFaceEmbeddings which is also
+  LocalEmbedding. Make them configurable. 2. Also Please update config
+  with how to use project and deploy it and use it. How to reindex and
+  upate vector db. 4. Update code doc whenever possible.
