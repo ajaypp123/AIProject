@@ -1,19 +1,20 @@
-import argparse
+
 import logging
 import json
 import os
 import logging
 import hashlib
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 from datetime import datetime
 from uuid import uuid4
 
 from config import IngestorConfig
-from document_loader import DocumentLoader, load_documents_from_directory
 from chunking import Chunker
 from embeddings import get_embedding_provider
 from vectordb import get_vectordb_client
+
+from document_loader import DocumentLoader
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,9 @@ class Ingestor:
         self.embedding_provider = get_embedding_provider(
             config.embedding.provider,
             base_url=getattr(config.embedding, 'url', None),
-            model=config.embedding.model,
+            model=getattr(config.embedding, 'model', None),
             api_key=getattr(config.embedding, 'api_key', None),
-            allow_fallback=getattr(config.embedding, 'allow_fallback', False)
+            batch_size=getattr(config.embedding, 'batch_size', None)
         )
         self.vectordb_client = get_vectordb_client(
             config.vectordb.provider,
@@ -61,7 +62,7 @@ class Ingestor:
                 return hashlib.sha256(f.read()).hexdigest()
         except Exception as e:
             logger.error(f"Failed to compute hash for {file_path}: {e}")
-            return ""
+            raise Exception(f"Failed to compute hash for {file_path}: {e}")
 
     def ingest_document(self, file_path: str) -> bool:
         file_path = str(file_path)
@@ -131,22 +132,25 @@ class Ingestor:
 
         if not directory_path.is_dir():
             logger.warning(f"Directory not found: {directory}")
-            return documents
+            return stats
 
         for file_path in directory_path.rglob('*'):
             stats["total_files"] += 1
-            if file_path.is_file():
-                if file_path.suffix.lower() not in DocumentLoader.SUPPORTED_TYPES:
-                    logging.warning(f"Skipping, {file_path}")
-                    stats["skipped"] += 1
-                    continue
-                logging.info(f"Please wait, ingesting document {file_path}")
-                if file_path and self.ingest_document(file_path):
-                    logging.debug(f"Successfully ingested document {file_path}")
-                    stats["successful"] += 1
-                else:
-                    logging.warning(f"Failed ingesting document {file_path}")
-                    stats["failed"] += 1
+            if not file_path.is_file(): continue
+
+            sufix = file_path.suffix.lower()
+            if sufix not in DocumentLoader.SUPPORTED_TYPES:
+                logging.warning(f"Skipping, {file_path}")
+                stats["skipped"] += 1
+                continue
+
+            logging.info(f"Please wait, ingesting document {file_path}")
+            if file_path and self.ingest_document(file_path):
+                logging.debug(f"Successfully ingested document {file_path}")
+                stats["successful"] += 1
+            else:
+                logging.warning(f"Failed ingesting document {file_path}")
+                stats["failed"] += 1
 
         return stats
 
@@ -181,39 +185,5 @@ class Ingestor:
             return True
         return False
 
-def main(config_file):
-    config = IngestorConfig(config_file)
-
-    logging.basicConfig(
-        level=config.log_level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-
-    logger.info(f"Using config file: {config_file}")
-
-    logger.info("Starting Spark RAG Ingestor")
-    logger.info(f"Vector DB: {config.vectordb.provider} at {config.vectordb.url}")
-    logger.info(f"Embedding: {config.embedding.provider} ({config.embedding.model})")
-
-    ingestor = Ingestor(config)
-
-    if not ingestor.health_check():
-        logger.error("Vector database is not healthy. Exiting.")
-        return
-
-    logger.info(f"Ingesting documents from {config.watch_dir}")
-    stats = ingestor.ingest_directory(config.watch_dir)
-
-    logger.info(f"Ingestion complete: {stats}")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Spark RAG ingestor")
-    parser.add_argument(
-        "--config",
-        "--conf",
-        dest="config_file",
-        default=None,
-        help="Optional path to a YAML config file"
-    )
-    args = parser.parse_args()
-    main(args.config_file)
+    def version():
+        return "1.0.0"

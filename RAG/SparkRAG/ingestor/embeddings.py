@@ -11,14 +11,22 @@ import logging
 from typing import List, Optional
 
 import requests
-import hashlib
-import random
 
 logger = logging.getLogger(__name__)
 
 
 class EmbeddingProvider:
     """Base interface for embedding providers."""
+    def __init__(self):
+        pass
+
+    def provision(self, model: str, api_key: str, batch_size: int,
+                     base_url: str):
+        self.model = model
+        self.api_key = api_key
+        self.batch_size = batch_size
+        self.base_url = base_url
+        logger.info(f"Initialized OllamaEmbedding with model {self.model}")
 
     def embed(self, text: str) -> Optional[List[float]]:
         """
@@ -53,19 +61,6 @@ class OllamaEmbedding(EmbeddingProvider):
         ollama pull nomic-embed-text
         ollama pull all-minilm
     """
-
-    def __init__(self, base_url: str, model: str):
-        """
-        Initialize Ollama embedding provider.
-
-        Args:
-            base_url: Ollama API base URL (e.g., http://localhost:11434)
-            model: Model name to use (e.g., nomic-embed-text)
-        """
-        self.base_url = base_url
-        self.model = model
-        logger.info(f"Initialized OllamaEmbedding with model {model}")
-
     def embed(self, text: str) -> Optional[List[float]]:
         """
         Generate embedding using Ollama API.
@@ -118,18 +113,7 @@ class OpenAIEmbedding(EmbeddingProvider):
         - text-embedding-3-large (highest quality)
         - text-embedding-ada-002 (legacy)
     """
-
-    def __init__(self, api_key: str, model: str = "text-embedding-3-small"):
-        """
-        Initialize OpenAI embedding provider.
-
-        Args:
-            api_key: OpenAI API key
-            model: Model to use (default: text-embedding-3-small)
-        """
-        self.api_key = api_key
-        self.model = model
-        logger.info(f"Initialized OpenAIEmbedding with model {model}")
+    # model: str = "text-embedding-3-small"
 
     def embed(self, text: str) -> Optional[List[float]]:
         """
@@ -199,17 +183,13 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
     Requires sentence-transformers library.
     """
 
-    def __init__(self, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        """
-        Initialize SentenceTransformer embedding provider.
-
-        Args:
-            model: HuggingFace model name or path
-
-        Raises:
-            ImportError: If sentence-transformers not installed
-            OSError: If model cannot be downloaded
-        """
+    def provision(self, model: str, api_key: str, batch_size: int,
+                     base_url: str):
+        # model: str = "sentence-transformers/all-MiniLM-L6-v2"
+        self.model = model
+        self.api_key = api_key
+        self.batch_size = batch_size
+        self.base_url = base_url
         try:
             from sentence_transformers import SentenceTransformer
             logger.info(f"Loading SentenceTransformer model: {model}")
@@ -226,9 +206,7 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
                 "If using a virtualenv, run the command in that environment."
             )
             logger.error(msg)
-            self._available = False
-            self.model = None
-            self.embedding_dim = 384
+            raise Exception(msg)
 
     def embed(self, text: str) -> Optional[List[float]]:
         """
@@ -273,18 +251,6 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
             return None
 
 
-def _deterministic_embedding(text: str, dim: int = 384) -> List[float]:
-    """Generate a deterministic pseudo-embedding for `text`.
-
-    This is a lightweight fallback used when a real embedding model isn't available.
-    It is deterministic (same input -> same vector) but not semantically meaningful.
-    """
-    h = hashlib.sha256(text.encode('utf-8')).hexdigest()
-    seed = int(h[:16], 16)
-    rnd = random.Random(seed)
-    return [rnd.uniform(-1.0, 1.0) for _ in range(dim)]
-
-
 class HuggingFaceEmbedding(EmbeddingProvider):
     """
     HuggingFace Inference API embeddings (cloud-based).
@@ -295,18 +261,8 @@ class HuggingFaceEmbedding(EmbeddingProvider):
     Requires HF_TOKEN environment variable or token parameter.
     """
 
-    def __init__(self, api_key: str, model: str = "sentence-transformers/all-MiniLM-L6-v2"):
-        """
-        Initialize HuggingFace Inference API embedding provider.
-
-        Args:
-            api_key: HuggingFace API token
-            model: Model name from HuggingFace hub
-        """
-        self.api_key = api_key
-        self.model = model
-        self.api_url = f"https://api-inference.huggingface.co/models/{model}"
-        logger.info(f"Initialized HuggingFaceEmbedding with model {model}")
+    # model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # self.base_url = f"https://api-inference.huggingface.co/models/{model}"
 
     def embed(self, text: str) -> Optional[List[float]]:
         """
@@ -320,7 +276,7 @@ class HuggingFaceEmbedding(EmbeddingProvider):
         """
         try:
             response = requests.post(
-                self.api_url,
+                self.base_url,
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={"inputs": text},
                 timeout=60
@@ -347,7 +303,7 @@ class HuggingFaceEmbedding(EmbeddingProvider):
         """
         try:
             response = requests.post(
-                self.api_url,
+                self.base_url,
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={"inputs": texts},
                 timeout=60
@@ -399,47 +355,30 @@ def get_embedding_provider(provider: str, **kwargs) -> EmbeddingProvider:
         ...     model="text-embedding-3-small")
     """
     provider = provider.lower().strip()
+    providerObj = None
 
     if provider == "ollama":
-        return OllamaEmbedding(
-            base_url=kwargs.get("base_url", "http://localhost:11434"),
-            model=kwargs.get("model", "nomic-embed-text")
-        )
+        providerObj = OllamaEmbedding()
 
     elif provider == "openai":
-        return OpenAIEmbedding(
-            api_key=kwargs.get("api_key", ""),
-            model=kwargs.get("model", "text-embedding-3-small")
-        )
+        providerObj = OpenAIEmbedding()
 
     elif provider in ["sentence-transformers", "local"]:
-        ste = SentenceTransformerEmbedding(
-            model=kwargs.get("model", "sentence-transformers/all-MiniLM-L6-v2")
-        )
-        allow_fallback = kwargs.get("allow_fallback", False)
-        if ste._available:
-            return ste
-        if allow_fallback:
-            logger.warning("SentenceTransformer unavailable; using deterministic fallback embeddings as configured")
-            class FallbackEmbedding(EmbeddingProvider):
-                def __init__(self, dim=384):
-                    self.dim = dim
-                def embed(self, text: str):
-                    return _deterministic_embedding(text, self.dim)
-                def embed_batch(self, texts: List[str]):
-                    return [ _deterministic_embedding(t, self.dim) for t in texts ]
-            return FallbackEmbedding(dim=ste.embedding_dim)
-        # Not available and no fallback allowed -> surface error
-        raise RuntimeError("SentenceTransformer model unavailable and fallback not allowed")
+        providerObj = SentenceTransformerEmbedding()
 
     elif provider == "huggingface":
-        return HuggingFaceEmbedding(
-            api_key=kwargs.get("api_key", ""),
-            model=kwargs.get("model", "sentence-transformers/all-MiniLM-L6-v2")
-        )
+        providerObj = HuggingFaceEmbedding()
 
     else:
         raise ValueError(
             f"Unknown embedding provider: {provider}\n"
             f"Supported providers: ollama, openai, sentence-transformers, huggingface"
         )
+
+    providerObj.provision(
+            model=kwargs.get("model", "nomic-embed-text"),
+            api_key=kwargs.get("api_key", ""),
+            batch_size=kwargs.get("batch_size", 32),
+            base_url=kwargs.get("base_url", "http://localhost:11434")
+        )
+    return providerObj

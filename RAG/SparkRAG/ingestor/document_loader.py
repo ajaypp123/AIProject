@@ -1,7 +1,6 @@
 import logging
-import os
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import Dict, Optional
 import json
 import csv
 from datetime import datetime
@@ -210,24 +209,3 @@ class DocumentLoader:
         except Exception as e:
             logger.error(f"HTML loading failed: {e}")
             return None
-
-def load_documents_from_directory(directory: str) -> List[Document]:
-    documents = []
-    directory_path = Path(directory)
-
-    if not directory_path.is_dir():
-        logger.warning(f"Directory not found: {directory}")
-        return documents
-
-    loader = DocumentLoader()
-
-    for file_path in directory_path.rglob('*'):
-        if file_path.is_file() and file_path.suffix.lower() in DocumentLoader.SUPPORTED_TYPES:
-            doc = loader.load(str(file_path))
-            if doc:
-                documents.append(doc)
-                logger.info(f"Loaded: {file_path.name}")
-        else:
-            logging.warning(f"Skipping file {file_path} ...")
-
-    return documents

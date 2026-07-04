@@ -1,10 +1,7 @@
 import os
 from typing import Optional
 from pathlib import Path
-#from dotenv import load_dotenv
 import yaml
-
-#load_dotenv()
 
 class EmbeddingConfig:
     def __init__(self):
@@ -37,22 +34,13 @@ class IngestorConfig:
         self.embedding = EmbeddingConfig()
         self.vectordb = VectorDBConfig()
         self.chunking = ChunkingConfig()
-        # Default watch directory: package-level data directory if present
-        base = Path(__file__).resolve().parents[1]
-        default_data_dir = base / 'data'
-        self.watch_dir = os.getenv("INGESTOR_WATCH_DIR", str(default_data_dir) if default_data_dir.exists() else "./data")
-        self.checkpoint_file = os.getenv("INGESTOR_CHECKPOINT", ".ingestor.json")
+        self.watch_dir = os.getenv("INGESTOR_WATCH_DIR", "/data")
+        self.checkpoint_file = os.getenv("INGESTOR_CHECKPOINT", "/tmp/.ingestor.json")
         self.skip_existing = os.getenv("SKIP_EXISTING", "true").lower() == "true"
         self.log_level = os.getenv("LOG_LEVEL", "INFO")
 
         # Resolve config_file: explicit -> env var -> default project development config
         config_path = config_file or os.getenv("INGESTOR_CONFIG_FILE")
-        if not config_path:
-            # look for config/config.development.yaml relative to project root
-            base = Path(__file__).resolve().parents[1]
-            candidate = base / 'config' / 'config.development.yaml'
-            if candidate.exists():
-                config_path = str(candidate)
 
         if config_path and os.path.exists(config_path):
             with open(config_path, 'r') as f:
@@ -60,6 +48,11 @@ class IngestorConfig:
                 if config_data:
                     # Pass config_path so relative watch.dir entries resolve relative to the config file
                     self._load_from_dict(config_data, config_path=config_path)
+
+    def _get_watch_dir(self):
+        base = Path(__file__).resolve().parents[1]
+        default_data_dir = base / 'data'
+        return os.getenv("INGESTOR_WATCH_DIR", "/data")
 
     def _load_from_dict(self, data: dict, config_path: Optional[str] = None):
         if 'logging' in data:
@@ -90,14 +83,7 @@ class IngestorConfig:
             self.chunking.top_k = data['chunking'].get('top_k', self.chunking.top_k)
             self.chunking.score_threshold = data['chunking'].get('score_threshold', self.chunking.score_threshold)
 
-        if 'watch' in data:
-            wd = data['watch'].get('dir', self.watch_dir)
-            # Resolve relative watch dir relative to the config file if provided
-            if config_path and wd and not os.path.isabs(wd):
-                base_dir = os.path.dirname(config_path)
-                wd = os.path.normpath(os.path.join(base_dir, wd))
-            self.watch_dir = wd
-        if 'checkpoint' in data:
-            self.checkpoint_file = data['checkpoint'].get('file', self.checkpoint_file)
-        if 'skip_existing' in data:
-            self.skip_existing = bool(data.get('skip_existing', self.skip_existing))
+        if 'ingestion' in data:
+            self.watch_dir = data['ingestion'].get('watch_dir', self.watch_dir)
+            self.checkpoint_file = data['ingestion'].get('checkpoint', self.checkpoint_file)
+            self.skip_existing = bool(data['ingestion'].get('skip_existing', self.skip_existing))
