@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
-import { FiCheckCircle, FiBot, FiUser } from 'react-icons/fi';
+import { FiCheckCircle, FiCpu, FiUser } from 'react-icons/fi';
 import './Message.css';
 
 function Message({ message }) {
@@ -10,7 +10,7 @@ function Message({ message }) {
         {message.type === 'user' ? (
           <FiUser size={18} />
         ) : (
-          <FiBot size={18} />
+          <FiCpu size={18} />
         )}
       </div>
       <div className="message-content">
@@ -20,7 +20,7 @@ function Message({ message }) {
           <ReactMarkdown
             components={{
               p: ({ node, ...props }) => <p {...props} />,
-              code: ({ node, inline, ...props }) => 
+              code: ({ node, inline, ...props }) =>
                 inline ? (
                   <code className="inline-code" {...props} />
                 ) : (
@@ -28,9 +28,9 @@ function Message({ message }) {
                 ),
               ul: ({ node, ...props }) => <ul className="message-list" {...props} />,
               ol: ({ node, ...props }) => <ol className="message-list" {...props} />,
-              h1: ({ node, ...props }) => <h3 {...props} />,
-              h2: ({ node, ...props }) => <h4 {...props} />,
-              h3: ({ node, ...props }) => <h5 {...props} />,
+              h1: ({ node, children, ...props }) => <h3 {...props}>{children}</h3>,
+              h2: ({ node, children, ...props }) => <h4 {...props}>{children}</h4>,
+              h3: ({ node, children, ...props }) => <h5 {...props}>{children}</h5>,
               blockquote: ({ node, ...props }) => <blockquote className="message-blockquote" {...props} />,
             }}
           >
