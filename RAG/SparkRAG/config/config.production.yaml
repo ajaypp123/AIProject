@@ -1,0 +1,38 @@
+# Spark RAG - Production Configuration
+# Use with external services and cloud providers
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+vectordb:
+  provider: "qdrant"
+  url: "https://qdrant.example.com"
+  api_key: "${QDRANT_API_KEY}"
+  collection: "spark-rag-prod"
+
+embedding:
+  provider: "openai"
+  model: "text-embedding-3-large"
+  api_key: "${OPENAI_API_KEY}"
+
+llm:
+  provider: "openai"
+  url: "https://api.openai.com/v1"
+  model: "gpt-4-turbo-preview"
+  api_key: "${OPENAI_API_KEY}"
+  max_tokens: 2048
+  temperature: 0.5
+
+retriever:
+  top_k: 10
+  chunk_size: 512
+  chunk_overlap: 50
+  reranker_enabled: true
+  reranker_model: "cross-encoder/ms-marco-MiniLM-L-12-v2"
+  strategy: "mmr"
+  score_threshold: 0.6
+
+logging:
+  level: "info"
+  json: true

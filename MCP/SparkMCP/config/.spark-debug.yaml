@@ -1,0 +1,4 @@
+logLevel: info
+outputFormat: json
+namespace: default
+retryMax: 3

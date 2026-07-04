@@ -1,0 +1,16 @@
+services:
+  spark-debug-mcp:
+    build: .
+    image: spark-debug-mcp:latest
+    container_name: spark-debug-mcp
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${HOME}/.kube/config:/home/spark/.kube/config:ro
+      - ./config:/etc/spark-debug-mcp:ro
+    environment:
+      - KUBECONFIG=/home/spark/.kube/config
+      - SPARK_DEBUG_LOG_LEVEL=info
+      - SPARK_DEBUG_OUTPUT_FORMAT=json
+      - SPARK_DEBUG_NAMESPACE=default
+    command: ["serve", "--log-level", "info"]

@@ -1,0 +1,97 @@
+.citation {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  background-color: rgba(102, 126, 234, 0.08);
+  border-left: 3px solid #667eea;
+  border-radius: 4px;
+  font-size: 12px;
+  margin: 6px 0;
+}
+
+html.dark-mode .citation {
+  background-color: rgba(102, 126, 234, 0.15);
+}
+
+.citation-icon {
+  color: #667eea;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.citation-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.citation-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.citation-source strong {
+  color: #667eea;
+  word-break: break-word;
+}
+
+.citation-section {
+  background-color: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.citation-document {
+  color: #666;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+html.dark-mode .citation-document {
+  color: #999;
+}
+
+.citation-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: #999;
+  font-size: 11px;
+}
+
+html.dark-mode .citation-meta {
+  color: #777;
+}
+
+.citation-score {
+  background-color: rgba(74, 222, 128, 0.2);
+  color: #22c55e;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.citation-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667eea;
+  text-decoration: none;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.citation-link:hover {
+  background-color: rgba(102, 126, 234, 0.2);
+  color: #5568d3;
+}

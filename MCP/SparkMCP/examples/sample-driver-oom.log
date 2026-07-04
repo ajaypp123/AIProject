@@ -1,0 +1,11 @@
+2024-01-15 10:00:01 INFO  SparkContext: Running Spark version 3.5.0
+2024-01-15 10:00:05 INFO  DAGScheduler: Submitting ResultStage 0
+2024-01-15 10:00:10 ERROR TaskSetManager: Lost executor 1 on node worker-2: Executor exited due to OOM
+2024-01-15 10:00:10 ERROR TaskSetManager: Task 0 in stage 0.0 failed 4 times; aborting job
+2024-01-15 10:00:11 ERROR DAGScheduler: Job 0 failed: org.apache.spark.SparkException: Job aborted due to stage failure
+	at org.apache.spark.scheduler.DAGScheduler.failJobAndIndependentStages(DAGScheduler.scala:2856)
+	at org.apache.spark.scheduler.DAGScheduler.$anonfun$abortStage$2(DAGScheduler.scala:2792)
+Caused by: java.lang.OutOfMemoryError: Java heap space
+	at org.apache.spark.memory.MemoryConsumer.allocateArray(MemoryConsumer.java:97)
+2024-01-15 10:00:11 ERROR SparkContext: Error initializing SparkContext.
+2024-01-15 10:00:11 INFO  ShutdownHookManager: Shutdown hook called
