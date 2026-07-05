@@ -25,3 +25,18 @@ vectordb:
   api_key: ""
   collection: "spark-rag"
 ```
+
+# Qdrant
+
+```sh
+docker run --rm -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
+curl http://localhost:6333/
+```
+
+```yaml
+vectordb:
+  provider: "qdrant"
+  url: "http://localhost:6333"
+  api_key: ""
+  collection: "spark-rag"
+```

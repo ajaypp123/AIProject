@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 )
 
 type Retriever struct {
-	vectorDB   VectorDB
-	embedding  EmbeddingProvider
-	config     RetrieverConfig
+	vectorDB  VectorDB
+	embedding EmbeddingProvider
+	config    RetrieverConfig
 }
 
 func NewRetriever(vectorDB VectorDB, embedding EmbeddingProvider, config RetrieverConfig) *Retriever {
@@ -104,7 +105,7 @@ func (r *Retriever) maximalMarginalRelevance(queryEmb []float32, results []Searc
 func getEmbedding(result SearchResult) []float32 {
 	if len(result.Citation.Source) > 0 {
 		h := rand.Uint32()
-		for i := range make([]byte, 384) {
+		for range make([]byte, 384) {
 			h = h*1103515245 + 12345
 		}
 		emb := make([]float32, 384)
@@ -132,7 +133,7 @@ func cosineSimilarity(a, b []float32) float32 {
 		return 0
 	}
 
-	return dotProduct / (float32(^uint32(0)+1) * float32(^uint32(0)+1))
+	return dotProduct / (float32(math.Sqrt(float64(normA))) * float32(math.Sqrt(float64(normB))))
 }
 
 type PromptBuilder struct {
@@ -188,8 +189,8 @@ func (cb *CitationBuilder) BuildCitations(results []SearchResult) []Citation {
 	for _, result := range results {
 		citation := Citation{
 			Document: result.Document,
-			Source: result.Citation.Source,
-			Score: result.Score,
+			Source:   result.Citation.Source,
+			Score:    result.Score,
 		}
 
 		if metadata, ok := result.Metadata["chunk_id"].(string); ok {
@@ -216,9 +217,9 @@ func (cb *CitationBuilder) BuildRelatedDocuments(results []SearchResult) []Docum
 	for _, result := range results {
 		if _, exists := docMap[result.Document]; !exists {
 			docMap[result.Document] = Document{
-				ID:   result.Document,
-				Title: result.Document,
-				Source: result.Citation.Source,
+				ID:      result.Document,
+				Title:   result.Document,
+				Source:  result.Citation.Source,
 				Content: result.Content,
 			}
 		}

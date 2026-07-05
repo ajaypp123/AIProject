@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -13,14 +12,14 @@ import (
 )
 
 type Handler struct {
-	retriever        *Retriever
-	vectorDB         VectorDB
-	llm              LLMProvider
-	embedding        EmbeddingProvider
-	promptBuilder    *PromptBuilder
-	citationBuilder  *CitationBuilder
-	config           *Config
-	logger           *zap.Logger
+	retriever       *Retriever
+	vectorDB        VectorDB
+	llm             LLMProvider
+	embedding       EmbeddingProvider
+	promptBuilder   *PromptBuilder
+	citationBuilder *CitationBuilder
+	config          *Config
+	logger          *zap.Logger
 }
 
 func NewHandler(retriever *Retriever, vectorDB VectorDB, llm LLMProvider, embedding EmbeddingProvider, config *Config, logger *zap.Logger) *Handler {
@@ -79,11 +78,11 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	chatResp := ChatResponse{
-		ConversationID: conversationID,
-		Answer:         response,
-		Citations:      citations,
+		ConversationID:  conversationID,
+		Answer:          response,
+		Citations:       citations,
 		ConfidenceScore: confidenceScore,
-		Timestamp:      time.Now(),
+		Timestamp:       time.Now(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -245,8 +244,8 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	resp := HealthResponse{
 		Status: "healthy",
 		Services: map[string]interface{}{
-			"vectordb": vectorDBHealth,
-			"llm":      h.config.LLM.Provider,
+			"vectordb":  vectorDBHealth,
+			"llm":       h.config.LLM.Provider,
 			"embedding": h.config.Embedding.Provider,
 		},
 		Timestamp: time.Now(),
@@ -280,8 +279,8 @@ func (h *Handler) writeError(w http.ResponseWriter, statusCode int, code, messag
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(ErrorResponse{
-		Error:   message,
-		Code:    code,
+		Error: message,
+		Code:  code,
 	})
 }
 

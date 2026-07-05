@@ -2,8 +2,8 @@ PyYAML==6.0.1
 python-dotenv==1.0.0
 requests==2.31.0
 pydantic==2.13.4
-sentence-transformers==2.2.2
-huggingface-hub==0.16.4
+sentence-transformers>=2.2.2
+huggingface-hub>=0.24.0
 torch>=2.0.0
 langchain==0.1.1
 langchain-community==0.0.14
@@ -15,4 +15,5 @@ chardet==5.2.0
 python-dateutil==2.8.2
 pathspec==0.12.1
 argparse==1.4.0
-cromadb==1.5.9
+chromadb==0.5.1
+qdrant-client>=1.9.0

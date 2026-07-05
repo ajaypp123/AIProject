@@ -141,6 +141,11 @@ docker exec spark-rag-ollama ollama pull mistral
 # Terminal 1: Start infrastructure
 docker-compose up -d qdrant ollama
 
+# Optional: run Qdrant directly with a persistent local volume
+docker run --rm -p 6333:6333 -p 6334:6334 \
+  -v "$PWD/qdrant_storage:/qdrant/storage" \
+  qdrant/qdrant:latest
+
 # Terminal 2: Start Go API
 cd api
 go run .
