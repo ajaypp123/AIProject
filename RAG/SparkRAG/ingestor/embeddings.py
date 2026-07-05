@@ -82,7 +82,7 @@ class OllamaEmbedding(EmbeddingProvider):
             return data.get("embedding")
         except Exception as e:
             logger.error(f"Ollama embedding failed: {e}")
-            return None
+            raise Exception(f"Ollama embedding failed: {e}")
 
     def embed_batch(self, texts: List[str]) -> Optional[List[List[float]]]:
         """
@@ -137,7 +137,7 @@ class OpenAIEmbedding(EmbeddingProvider):
             return data["data"][0]["embedding"]
         except Exception as e:
             logger.error(f"OpenAI embedding failed: {e}")
-            return None
+            raise Exception(f"Ollama embedding failed: {e}")
 
     def embed_batch(self, texts: List[str]) -> Optional[List[List[float]]]:
         """
@@ -165,7 +165,7 @@ class OpenAIEmbedding(EmbeddingProvider):
             return embeddings
         except Exception as e:
             logger.error(f"OpenAI batch embedding failed: {e}")
-            return None
+            raise Exception(f"OpenAI batch embedding failed: {e}")
 
 
 class SentenceTransformerEmbedding(EmbeddingProvider):
@@ -226,7 +226,7 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
             return embedding.tolist()
         except Exception as e:
             logger.error(f"SentenceTransformer embedding failed: {e}")
-            return None
+            raise Exception(f"SentenceTransformer embedding failed: {e}")
 
     def embed_batch(self, texts: List[str]) -> Optional[List[List[float]]]:
         """
@@ -248,7 +248,7 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
             return embeddings.tolist()
         except Exception as e:
             logger.error(f"SentenceTransformer batch embedding failed: {e}")
-            return None
+            raise Exception(f"SentenceTransformer batch embedding failed: {e}")
 
 
 class HuggingFaceEmbedding(EmbeddingProvider):
@@ -289,7 +289,7 @@ class HuggingFaceEmbedding(EmbeddingProvider):
             return data
         except Exception as e:
             logger.error(f"HuggingFace embedding failed: {e}")
-            return None
+            raise Exception(f"HuggingFace embedding failed: {e}")
 
     def embed_batch(self, texts: List[str]) -> Optional[List[List[float]]]:
         """

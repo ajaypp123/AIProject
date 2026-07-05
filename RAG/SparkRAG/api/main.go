@@ -121,8 +121,8 @@ func main() {
 	router.Get("/api/documents", handler.Documents)
 	router.Get("/api/providers", handler.Providers)
 	router.Get("/api/collections", handler.Collections)
-	router.Get("/health", handler.Health)
-	router.Get("/metrics", handler.Metrics)
+	router.Get("/api/health", handler.Health)
+	router.Get("/api/metrics", handler.Metrics)
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

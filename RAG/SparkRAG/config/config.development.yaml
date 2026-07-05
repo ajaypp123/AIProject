@@ -15,8 +15,8 @@ llm:
 
 # ingestor configuration
 vectordb:
-  provider: "qdrant"
-  url: "http://localhost:6333"
+  provider: "chroma-local"
+  url: "/tmp/chroma_db"
   api_key: ""
   collection: "spark-rag"
 

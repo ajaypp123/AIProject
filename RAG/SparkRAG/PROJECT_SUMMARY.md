@@ -74,7 +74,7 @@ A production-ready Retrieval Augmented Generation system for Apache Spark knowle
 - Search: Document discovery
 - Settings: Provider info and system status
 
-### 4. **Docker Deployment** 
+### 4. **Docker Deployment**
 - **Files**: 3 Dockerfiles + docker-compose
 - **Services**:
   - Multi-stage builds for optimization
@@ -147,12 +147,12 @@ A production-ready Retrieval Augmented Generation system for Apache Spark knowle
                │
       ┌────────┴────────┬────────────┐
       │                 │            │
-┌─────▼─────┐    ┌─────▼──────┐  ┌─▼──────────┐
-│ Retriever │    │ LLM        │  │ Embeddings │
-│ • Search  │    │ Provider   │  │ Provider   │
-│ • Filter  │    │ • Ollama   │  │ • Ollama   │
-│ • Rerank  │    │ • OpenAI   │  │ • OpenAI   │
-└─────┬─────┘    └────────────┘  └────────────┘
+┌─────▼─────┐     ┌─────▼──────┐   ┌─▼──────────┐
+│ Retriever │     │ LLM        │   │ Embeddings │
+│ • Search  │     │ Provider   │   │ Provider   │
+│ • Filter  │     │ • Ollama   │   │ • Ollama   │
+│ • Rerank  │     │ • OpenAI   │   │ • OpenAI   │
+└─────┬─────┘     └────────────┘   └────────────┘
       │
       │ Vector
       │ Search
@@ -288,7 +288,7 @@ embedding:
 ```yaml
 llm:
   provider: "ollama"
-  url: "http://ollama:11434"
+  url: "http://localhost:11434"
   model: "mistral"
 
 embedding:

@@ -1,5 +1,7 @@
 
-### VectorDBLocally: CromaDB
+# VectorDB Configuration
+
+## CromaDB
 ```yaml
 vectordb:
   provider: "chroma-local"
@@ -8,7 +10,7 @@ vectordb:
   collection: "spark-rag"
 ```
 
-### VectorDBDocker: CromaDB Docker
+## CromaDB Url Client
 
 ```sh
 docker pull chromadb/chroma:latest
@@ -26,7 +28,7 @@ vectordb:
   collection: "spark-rag"
 ```
 
-# Qdrant
+## Qdrant Client
 
 ```sh
 docker run --rm -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
@@ -39,4 +41,31 @@ vectordb:
   url: "http://localhost:6333"
   api_key: ""
   collection: "spark-rag"
+```
+
+# Embedding Configuration
+
+## sentence-transformers
+```yaml
+embedding:
+  provider: "sentence-transformers"
+  model: "sentence-transformers/all-MiniLM-L6-v2"
+  api_key: ""
+  url: ""
+  batch_size: 32
+```
+
+## ollama
+
+```sh
+ollama pull nomic-embed-text
+```
+
+```yaml
+embedding:
+  provider: "ollama"
+  model: "nomic-embed-text"
+  api_key: ""
+  url: "http://localhost:11434"
+  batch_size: 32
 ```
