@@ -15,5 +15,5 @@ chardet==5.2.0
 python-dateutil==2.8.2
 pathspec==0.12.1
 argparse==1.4.0
-chromadb==0.5.1
+chromadb==1.5.9
 qdrant-client>=1.9.0

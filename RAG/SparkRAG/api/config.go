@@ -8,7 +8,7 @@ import (
 )
 
 type ServerConfig struct {
-	Port int `yaml:"port" envconfig:"SERVER_PORT"`
+	Port int    `yaml:"port" envconfig:"SERVER_PORT"`
 	Host string `yaml:"host" envconfig:"SERVER_HOST"`
 }
 
@@ -23,25 +23,26 @@ type EmbeddingConfig struct {
 	Provider string `yaml:"provider" envconfig:"EMBEDDING_PROVIDER"`
 	Model    string `yaml:"model" envconfig:"EMBEDDING_MODEL"`
 	APIKey   string `yaml:"api_key" envconfig:"EMBEDDING_API_KEY"`
+	URL      string `yaml:"url" envconfig:"EMBEDDING_URL"`
 }
 
 type LLMConfig struct {
-	Provider   string `yaml:"provider" envconfig:"LLM_PROVIDER"`
-	URL        string `yaml:"url" envconfig:"LLM_URL"`
-	Model      string `yaml:"model" envconfig:"LLM_MODEL"`
-	APIKey     string `yaml:"api_key" envconfig:"LLM_API_KEY"`
-	MaxTokens  int    `yaml:"max_tokens" envconfig:"LLM_MAX_TOKENS"`
+	Provider    string  `yaml:"provider" envconfig:"LLM_PROVIDER"`
+	URL         string  `yaml:"url" envconfig:"LLM_URL"`
+	Model       string  `yaml:"model" envconfig:"LLM_MODEL"`
+	APIKey      string  `yaml:"api_key" envconfig:"LLM_API_KEY"`
+	MaxTokens   int     `yaml:"max_tokens" envconfig:"LLM_MAX_TOKENS"`
 	Temperature float32 `yaml:"temperature" envconfig:"LLM_TEMPERATURE"`
 }
 
 type RetrieverConfig struct {
-	TopK             int     `yaml:"top_k" envconfig:"RETRIEVER_TOP_K"`
-	ChunkSize        int     `yaml:"chunk_size" envconfig:"RETRIEVER_CHUNK_SIZE"`
-	ChunkOverlap     int     `yaml:"chunk_overlap" envconfig:"RETRIEVER_CHUNK_OVERLAP"`
-	RerankerEnabled  bool    `yaml:"reranker_enabled" envconfig:"RETRIEVER_RERANKER_ENABLED"`
-	RerankerModel    string  `yaml:"reranker_model" envconfig:"RETRIEVER_RERANKER_MODEL"`
-	Strategy         string  `yaml:"strategy" envconfig:"RETRIEVER_STRATEGY"`
-	ScoreThreshold   float32 `yaml:"score_threshold" envconfig:"RETRIEVER_SCORE_THRESHOLD"`
+	TopK            int     `yaml:"top_k" envconfig:"RETRIEVER_TOP_K"`
+	ChunkSize       int     `yaml:"chunk_size" envconfig:"RETRIEVER_CHUNK_SIZE"`
+	ChunkOverlap    int     `yaml:"chunk_overlap" envconfig:"RETRIEVER_CHUNK_OVERLAP"`
+	RerankerEnabled bool    `yaml:"reranker_enabled" envconfig:"RETRIEVER_RERANKER_ENABLED"`
+	RerankerModel   string  `yaml:"reranker_model" envconfig:"RETRIEVER_RERANKER_MODEL"`
+	Strategy        string  `yaml:"strategy" envconfig:"RETRIEVER_STRATEGY"`
+	ScoreThreshold  float32 `yaml:"score_threshold" envconfig:"RETRIEVER_SCORE_THRESHOLD"`
 }
 
 type LoggingConfig struct {
@@ -50,12 +51,12 @@ type LoggingConfig struct {
 }
 
 type Config struct {
-	Server    ServerConfig      `yaml:"server"`
-	VectorDB  VectorDBConfig    `yaml:"vectordb"`
-	Embedding EmbeddingConfig   `yaml:"embedding"`
-	LLM       LLMConfig         `yaml:"llm"`
-	Retriever RetrieverConfig   `yaml:"retriever"`
-	Logging   LoggingConfig     `yaml:"logging"`
+	Server    ServerConfig    `yaml:"server"`
+	VectorDB  VectorDBConfig  `yaml:"vectordb"`
+	Embedding EmbeddingConfig `yaml:"embedding"`
+	LLM       LLMConfig       `yaml:"llm"`
+	Retriever RetrieverConfig `yaml:"retriever"`
+	Logging   LoggingConfig   `yaml:"logging"`
 }
 
 func LoadConfig(configPath string) (*Config, error) {
@@ -72,6 +73,8 @@ func LoadConfig(configPath string) (*Config, error) {
 		Embedding: EmbeddingConfig{
 			Provider: "ollama",
 			Model:    "nomic-embed-text",
+			URL:      "",
+			APIKey:   "",
 		},
 		LLM: LLMConfig{
 			Provider:    "ollama",

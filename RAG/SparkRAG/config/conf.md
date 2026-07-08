@@ -1,7 +1,7 @@
 
 # VectorDB Configuration
 
-## CromaDB
+## CromaDB Local Client
 ```yaml
 vectordb:
   provider: "chroma-local"
@@ -31,7 +31,9 @@ vectordb:
 ## Qdrant Client
 
 ```sh
-docker run --rm -p 6333:6333 -p 6334:6334 qdrant/qdrant:latest
+docker run --rm -p 6333:6333 -p 6334:6334 \
+  -v "$PWD/qdrant_storage:/qdrant/storage" \
+  qdrant/qdrant:latest
 curl http://localhost:6333/
 ```
 
@@ -59,6 +61,7 @@ embedding:
 
 ```sh
 ollama pull nomic-embed-text
+ollama list
 ```
 
 ```yaml
@@ -69,3 +72,15 @@ embedding:
   url: "http://localhost:11434"
   batch_size: 32
 ```
+
+## OpenAI emmbedding models
+
+```yaml
+embedding:
+  provider: "openai"
+  model: ""
+  api_key: ""
+  url: ""
+  batch_size: 32
+```
+https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2

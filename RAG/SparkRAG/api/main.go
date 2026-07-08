@@ -55,6 +55,7 @@ func main() {
 		zap.Int("port", cfg.Server.Port),
 		zap.String("vectordb", cfg.VectorDB.Provider),
 		zap.String("llm", cfg.LLM.Provider),
+		zap.String("config", *configFile),
 	)
 
 	var vectorDB VectorDB
@@ -87,6 +88,16 @@ func main() {
 	case "openai":
 		embedding = NewOpenAIEmbedding(cfg.Embedding.APIKey, cfg.Embedding.Model)
 		logger.Info("Using OpenAI embeddings", zap.String("model", cfg.Embedding.Model))
+	case "sentence-transformers":
+		baseURL := cfg.Embedding.URL
+		if baseURL == "" {
+			baseURL = "http://localhost:8000"
+		}
+		embedding = NewSentenceTransformerEmbedding(baseURL, cfg.Embedding.Model)
+		logger.Info("Using SentenceTransformer embeddings",
+			zap.String("model", cfg.Embedding.Model),
+			zap.String("url", baseURL),
+			zap.String("note", "Ensure embedding service is running"))
 	default:
 		logger.Fatal("unsupported embedding provider", zap.String("provider", cfg.Embedding.Provider))
 	}

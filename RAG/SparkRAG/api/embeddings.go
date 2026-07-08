@@ -15,7 +15,7 @@ type EmbeddingProvider interface {
 	// Embed generates an embedding for a single text string.
 	// Returns the embedding vector or an error.
 	Embed(ctx context.Context, text string) ([]float32, error)
-	
+
 	// EmbedBatch generates embeddings for multiple texts efficiently.
 	// Should batch requests when possible for better performance.
 	EmbedBatch(ctx context.Context, texts []string) ([][]float32, error)
@@ -25,8 +25,8 @@ type EmbeddingProvider interface {
 // Ollama must be running and the embedding model pulled.
 // Supported models: nomic-embed-text, all-minilm, and others.
 type OllamaEmbedding struct {
-	baseURL string      // Ollama API base URL
-	model   string      // Model name (e.g., nomic-embed-text)
+	baseURL string // Ollama API base URL
+	model   string // Model name (e.g., nomic-embed-text)
 	client  *http.Client
 }
 
@@ -87,8 +87,8 @@ func (o *OllamaEmbedding) EmbedBatch(ctx context.Context, texts []string) ([][]f
 // OpenAIEmbedding implements EmbeddingProvider using OpenAI cloud API.
 // Supports embedding models: text-embedding-3-small, text-embedding-3-large
 type OpenAIEmbedding struct {
-	apiKey string      // OpenAI API key
-	model  string      // Model name
+	apiKey string // OpenAI API key
+	model  string // Model name
 	client *http.Client
 }
 
@@ -177,9 +177,9 @@ func (o *OpenAIEmbedding) EmbedBatch(ctx context.Context, texts []string) ([][]f
 // HuggingFaceEmbedding implements EmbeddingProvider using HuggingFace Inference API.
 // Supports any embedding model from the HuggingFace hub.
 type HuggingFaceEmbedding struct {
-	apiKey string      // HuggingFace API token
-	model  string      // Model name
-	apiURL string      // Full API endpoint URL
+	apiKey string // HuggingFace API token
+	model  string // Model name
+	apiURL string // Full API endpoint URL
 	client *http.Client
 }
 
@@ -245,4 +245,89 @@ func (h *HuggingFaceEmbedding) EmbedBatch(ctx context.Context, texts []string) (
 	}
 
 	return result, nil
+}
+
+// SentenceTransformerEmbedding implements EmbeddingProvider using a local SentenceTransformers HTTP service.
+//
+// This provider connects to a local Python FastAPI service that wraps HuggingFace SentenceTransformers.
+// The service provides CPU-efficient local embeddings without external API keys.
+//
+// To run the service:
+//   pip install fastapi uvicorn sentence-transformers
+//   python ingestor/embedding_service.py --model sentence-transformers/all-MiniLM-L6-v2 --port 8000
+//
+// Supported models: all-MiniLM-L6-v2, all-mpnet-base-v2, bge-base-en-v1.5, and others from HuggingFace.
+type SentenceTransformerEmbedding struct {
+	baseURL string      // Local service base URL (e.g., http://localhost:8000)
+	model   string      // Model name (matches Python service model)
+	client  *http.Client
+}
+
+// NewSentenceTransformerEmbedding creates a SentenceTransformer embedding provider.
+// baseURL should be the local embedding service endpoint (defaults to http://localhost:8000).
+// model is the HuggingFace model name (e.g., "sentence-transformers/all-MiniLM-L6-v2").
+// Ensure the embedding service is running before using this provider.
+func NewSentenceTransformerEmbedding(baseURL, model string) *SentenceTransformerEmbedding {
+	if baseURL == "" {
+		baseURL = "http://localhost:8000"
+	}
+	return &SentenceTransformerEmbedding{
+		baseURL: baseURL,
+		model:   model,
+		client:  &http.Client{Timeout: 60 * time.Second},
+	}
+}
+
+// Embed generates a single embedding using local SentenceTransformer service
+func (s *SentenceTransformerEmbedding) Embed(ctx context.Context, text string) ([]float32, error) {
+	payload := map[string]interface{}{
+		"text": text,
+	}
+
+	body, _ := json.Marshal(payload)
+	req, _ := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/embed", s.baseURL), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("sentence-transformer embedding failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Embedding []float32 `json:"embedding"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode embedding: %w", err)
+	}
+
+	return result.Embedding, nil
+}
+
+// EmbedBatch generates embeddings for multiple texts using local SentenceTransformer service
+func (s *SentenceTransformerEmbedding) EmbedBatch(ctx context.Context, texts []string) ([][]float32, error) {
+	payload := map[string]interface{}{
+		"texts": texts,
+	}
+
+	body, _ := json.Marshal(payload)
+	req, _ := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/embed-batch", s.baseURL), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("sentence-transformer batch embedding failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Embeddings [][]float32 `json:"embeddings"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode batch embedding: %w", err)
+	}
+
+	return result.Embeddings, nil
 }

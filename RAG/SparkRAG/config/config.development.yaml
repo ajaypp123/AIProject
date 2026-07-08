@@ -15,16 +15,16 @@ llm:
 
 # ingestor configuration
 vectordb:
-  provider: "chroma-local"
-  url: "/tmp/chroma_db"
+  provider: "qdrant"
+  url: "http://localhost:6333"
   api_key: ""
-  collection: "spark-rag"
+  collection: "spark-rag-collection"
 
 embedding:
-  provider: "sentence-transformers"
-  model: "sentence-transformers/all-MiniLM-L6-v2"
+  provider: "ollama"
+  model: "nomic-embed-text"
   api_key: ""
-  url: ""
+  url: "http://localhost:11434"
   batch_size: 32
 
 chunking:
@@ -37,7 +37,7 @@ chunking:
   score_threshold: 0.5
 
 ingestion:
-  watch_dir: "/home/ajayp/code/AIProject/RAG/SparkRAG/data"
+  watch_dir: "/data/files"
   checkpoint: "/tmp/.ingestor.json"
   skip_existing: true
 
