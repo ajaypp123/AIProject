@@ -36,7 +36,8 @@ class Ingestor:
             config.vectordb.provider,
             url=config.vectordb.url,
             collection=config.vectordb.collection,
-            api_key=config.vectordb.api_key
+            api_key=config.vectordb.api_key,
+            batch_size=getattr(config.vectordb, 'batch_size', None)
         )
         self.checkpoint = self._load_checkpoint()
 

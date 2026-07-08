@@ -19,6 +19,7 @@ class VectorDBConfig:
         self.url = os.getenv("VECTORDB_URL", "http://localhost:8000")
         self.api_key = os.getenv("VECTORDB_API_KEY", "")
         self.collection = os.getenv("VECTORDB_COLLECTION", "spark-rag")
+        self.batch_size = int(os.getenv("VECTORDB_BATCH_SIZE", "32"))
 
 class ChunkingConfig:
     def __init__(self):
@@ -75,6 +76,7 @@ class IngestorConfig:
             self.vectordb.url = data['vectordb'].get('url', self.vectordb.url)
             self.vectordb.collection = data['vectordb'].get('collection', self.vectordb.collection)
             self.vectordb.api_key = data['vectordb'].get('api_key', self.vectordb.api_key)
+            self.vectordb.batch_size = data['vectordb'].get('batch_size', self.vectordb.batch_size)
 
         if 'chunking' in data:
             self.chunking.chunk_size = data['chunking'].get('chunk_size', self.chunking.chunk_size)

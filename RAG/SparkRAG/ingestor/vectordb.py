@@ -8,10 +8,11 @@ logger = logging.getLogger(__name__)
 
 
 class VectorDBClient:
-    def __init__(self, url, collection, api_key):
+    def __init__(self, url, collection, api_key, batch_size: int = 100):
         self.url = url
         self.api_key = api_key
         self.collection = collection
+        self.batch_size = batch_size
 
     def store_chunks(self, chunks: List[Dict]) -> bool:
         raise NotImplementedError
@@ -36,9 +37,9 @@ class VectorDBClient:
 
 
 class QdrantClient(VectorDBClient):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None):
-        super().__init__(url, collection, api_key)
-        self._client = QdrantClientAdapter(url, collection, api_key)
+    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+        super().__init__(url, collection, api_key, batch_size)
+        self._client = QdrantClientAdapter(url, collection, api_key, batch_size)
 
     def store_chunks(self, chunks: List[Dict]) -> bool:
         return self._client.store_chunks(chunks)
@@ -54,9 +55,9 @@ class QdrantClient(VectorDBClient):
 
 
 class ChromaClient(VectorDBClient):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None):
-        super().__init__(url, collection, api_key)
-        self._client = ChromaClientAdapter(url, collection, api_key)
+    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+        super().__init__(url, collection, api_key, batch_size)
+        self._client = ChromaClientAdapter(url, collection, api_key, batch_size)
 
     def store_chunks(self, chunks: List[Dict]) -> bool:
         return self._client.store_chunks(chunks)
@@ -72,9 +73,9 @@ class ChromaClient(VectorDBClient):
 
 
 class ChromaLocalClient(VectorDBClient):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None):
-        super().__init__(url, collection, api_key)
-        self._client = ChromaLocalClientAdapter(url, collection, api_key)
+    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+        super().__init__(url, collection, api_key, batch_size)
+        self._client = ChromaLocalClientAdapter(url, collection, api_key, batch_size)
 
     def store_chunks(self, chunks: List[Dict]) -> bool:
         return self._client.store_chunks(chunks)
@@ -93,12 +94,13 @@ def get_vectordb_client(provider: str, **kwargs) -> VectorDBClient:
     url = kwargs.get("url", "")
     collection = kwargs.get("collection", "spark-rag")
     api_key = kwargs.get("api_key")
+    batch_size = kwargs.get("batch_size")
 
     if provider == "qdrant":
-        return QdrantClient(url, collection, api_key)
+        return QdrantClient(url, collection, api_key, batch_size)
     if provider == "chroma":
-        return ChromaClient(url, collection, api_key)
+        return ChromaClient(url, collection, api_key, batch_size)
     if provider == "chroma-local":
-        return ChromaLocalClient(url, collection, api_key)
+        return ChromaLocalClient(url, collection, api_key, batch_size)
 
     raise ValueError(f"Unknown vector DB provider: {provider}")

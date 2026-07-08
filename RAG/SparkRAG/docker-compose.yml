@@ -38,8 +38,11 @@ services:
       - spark-rag
     deploy:
       resources:
-        limits:
-          memory: 8G
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   spark-rag-embedding-service:
     build:

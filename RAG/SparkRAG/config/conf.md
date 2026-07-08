@@ -8,6 +8,7 @@ vectordb:
   url: "/tmp/chroma_db"
   api_key: ""
   collection: "spark-rag"
+  batch_size: 100
 ```
 
 ## CromaDB Url Client
@@ -26,6 +27,7 @@ vectordb:
   url: "http://localhost:6333"
   api_key: ""
   collection: "spark-rag"
+  batch_size: 100
 ```
 
 ## Qdrant Client
@@ -43,6 +45,7 @@ vectordb:
   url: "http://localhost:6333"
   api_key: ""
   collection: "spark-rag"
+  batch_size: 100
 ```
 
 # Embedding Configuration
@@ -83,4 +86,23 @@ embedding:
   url: ""
   batch_size: 32
 ```
-https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2
+
+# LLM
+
+| Model         | Size | Speed | Quality | Recommendation          |
+| ------------- | ---- | ----- | ------- | ----------------------- |
+| `llama3.2:3b` | 3B   | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐    | Very fast testing       |
+| `gemma3:4b`   | 4B   | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐   | Excellent small model   |
+| `qwen2.5:7b`  | 7B   | ⭐⭐⭐⭐  | ⭐⭐⭐⭐⭐   | **Best overall choice** |
+| `mistral`     | 7B   | ⭐⭐⭐⭐  | ⭐⭐⭐⭐    | Good alternative        |
+| `qwen2.5:14b` | 14B  | ⭐⭐    | ⭐⭐⭐⭐⭐   | Too large for 8 GB VRAM |
+
+```yaml
+llm:
+  provider: "ollama"
+  url: "http://localhost:11434"
+  model: "mistral"
+  api_key: ""
+  max_tokens: 2048
+  temperature: 0.7
+```

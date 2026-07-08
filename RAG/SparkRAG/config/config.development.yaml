@@ -8,7 +8,7 @@ server:
 llm:
   provider: "ollama"
   url: "http://localhost:11434"
-  model: "mistral"
+  model: "gemma3:4b"
   api_key: ""
   max_tokens: 2048
   temperature: 0.7
@@ -19,6 +19,7 @@ vectordb:
   url: "http://localhost:6333"
   api_key: ""
   collection: "spark-rag-collection"
+  batch_size: 100
 
 embedding:
   provider: "ollama"
@@ -38,7 +39,7 @@ chunking:
 
 ingestion:
   watch_dir: "/data/files"
-  checkpoint: "/tmp/.ingestor.json"
+  checkpoint: "/data/.ingestor.json"
   skip_existing: true
 
 logging:

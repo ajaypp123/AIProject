@@ -87,7 +87,7 @@ class ChromaLocalClientAdapterInterface:
 
 
 class ChromaClientAdapter(ChromaLocalClientAdapterInterface):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None):
+    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size = 100):
         self.url = url.rstrip("/") if url else "http://localhost:8000"
         self.collection_name = collection
         self.api_key = api_key
@@ -102,7 +102,7 @@ class ChromaClientAdapter(ChromaLocalClientAdapterInterface):
 
 
 class ChromaLocalClientAdapter(ChromaLocalClientAdapterInterface):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None):
+    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
         croma_db_location = os.getenv("CROMA_DB_LOCATION", url)
         DB_DIR = Path(croma_db_location)
         DB_DIR.mkdir(exist_ok=True)

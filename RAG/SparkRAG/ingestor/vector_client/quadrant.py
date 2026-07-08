@@ -1,5 +1,7 @@
 import logging
 from typing import Any, Dict, List, Optional
+from itertools import islice
+import uuid
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, FieldCondition, Filter, MatchValue, PointStruct, VectorParams
@@ -8,30 +10,49 @@ logger = logging.getLogger(__name__)
 
 
 class QdrantClientAdapter:
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        url: str,
+        collection: str,
+        api_key: Optional[str] = None,
+        batch_size: int = 100,
+    ):
         self.url = url.rstrip("/") if url else "http://localhost:6333"
         self.collection_name = collection
         self.api_key = api_key
-        self.client = QdrantClient(url=self.url, api_key=api_key, timeout=30)
+        self.batch_size = batch_size
+
+        self.client = QdrantClient(
+            url=self.url,
+            api_key=api_key,
+            timeout=120
+        )
 
     def store_chunks(self, chunks: List[Dict[str, Any]]) -> bool:
         try:
+
             if not chunks:
                 return True
 
-            first_embedding = chunks[0].get("embedding") or []
+            first_embedding = chunks[0]["embedding"]
+
             if not self._collection_exists():
                 self.client.create_collection(
                     collection_name=self.collection_name,
-                    vectors_config=VectorParams(size=len(first_embedding), distance=Distance.COSINE),
+                    vectors_config=VectorParams(
+                        size=len(first_embedding),
+                        distance=Distance.COSINE,
+                    ),
                 )
 
             points = []
+
             for chunk in chunks:
+
                 points.append(
                     PointStruct(
-                        id=hash(chunk["id"]) & 0x7FFFFFFF,
-                        vector=chunk.get("embedding") or [],
+                        id=str(uuid.uuid5(uuid.NAMESPACE_DNS, chunk["id"])),
+                        vector=chunk["embedding"],
                         payload={
                             "document": chunk.get("document_id"),
                             "content": chunk.get("content"),
@@ -42,11 +63,31 @@ class QdrantClientAdapter:
                     )
                 )
 
-            self.client.upsert(collection_name=self.collection_name, points=points, wait=True)
-            logger.info("Stored %s chunks to Qdrant", len(chunks))
+            total = len(points)
+
+            for start in range(0, total, self.batch_size):
+
+                batch = points[start:start + self.batch_size]
+
+                self.client.upsert(
+                    collection_name=self.collection_name,
+                    points=batch,
+                    wait=True,
+                )
+
+                logger.info(
+                    "Stored batch %d-%d/%d",
+                    start + 1,
+                    min(start + self.batch_size, total),
+                    total,
+                )
+
+            logger.info("Successfully stored %d chunks", total)
+
             return True
-        except Exception as exc:  # pragma: no cover - defensive path
-            logger.error("Failed to store chunks to Qdrant: %s", exc)
+
+        except Exception as exc:
+            logger.exception("Failed storing chunks to Qdrant")
             return False
 
     def delete_document(self, doc_id: str) -> bool:
