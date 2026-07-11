@@ -253,13 +253,14 @@ func (h *HuggingFaceEmbedding) EmbedBatch(ctx context.Context, texts []string) (
 // The service provides CPU-efficient local embeddings without external API keys.
 //
 // To run the service:
-//   pip install fastapi uvicorn sentence-transformers
-//   python ingestor/embedding_service.py --model sentence-transformers/all-MiniLM-L6-v2 --port 8000
+//
+//	pip install fastapi uvicorn sentence-transformers
+//	python ingestor/embedding_service.py --model sentence-transformers/all-MiniLM-L6-v2 --port 8000
 //
 // Supported models: all-MiniLM-L6-v2, all-mpnet-base-v2, bge-base-en-v1.5, and others from HuggingFace.
 type SentenceTransformerEmbedding struct {
-	baseURL string      // Local service base URL (e.g., http://localhost:8000)
-	model   string      // Model name (matches Python service model)
+	baseURL string // Local service base URL (e.g., http://localhost:8000)
+	model   string // Model name (matches Python service model)
 	client  *http.Client
 }
 

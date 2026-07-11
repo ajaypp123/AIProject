@@ -40,12 +40,12 @@ func (o *OllamaLLM) Generate(ctx context.Context, prompt string, history []Messa
 	}
 
 	payload := map[string]interface{}{
-		"model": o.model,
+		"model":  o.model,
 		"prompt": fullPrompt,
 		"stream": false,
 		"options": map[string]interface{}{
 			"temperature": o.temperature,
-			"top_p": 0.9,
+			"top_p":       0.9,
 		},
 	}
 
@@ -77,7 +77,7 @@ func (o *OllamaLLM) GenerateStream(ctx context.Context, prompt string, history [
 	}
 
 	payload := map[string]interface{}{
-		"model": o.model,
+		"model":  o.model,
 		"prompt": fullPrompt,
 		"stream": true,
 		"options": map[string]interface{}{
@@ -147,20 +147,20 @@ func (o *OpenAILLM) Generate(ctx context.Context, prompt string, history []Messa
 
 	for _, msg := range history {
 		messages = append(messages, map[string]string{
-			"role": msg.Role,
+			"role":    msg.Role,
 			"content": msg.Content,
 		})
 	}
 
 	messages = append(messages, map[string]string{
-		"role": "user",
+		"role":    "user",
 		"content": prompt,
 	})
 
 	payload := map[string]interface{}{
-		"model": o.model,
-		"messages": messages,
-		"max_tokens": o.maxTokens,
+		"model":       o.model,
+		"messages":    messages,
+		"max_tokens":  o.maxTokens,
 		"temperature": o.temperature,
 	}
 
@@ -201,22 +201,22 @@ func (o *OpenAILLM) GenerateStream(ctx context.Context, prompt string, history [
 
 	for _, msg := range history {
 		messages = append(messages, map[string]string{
-			"role": msg.Role,
+			"role":    msg.Role,
 			"content": msg.Content,
 		})
 	}
 
 	messages = append(messages, map[string]string{
-		"role": "user",
+		"role":    "user",
 		"content": prompt,
 	})
 
 	payload := map[string]interface{}{
-		"model": o.model,
-		"messages": messages,
-		"max_tokens": o.maxTokens,
+		"model":       o.model,
+		"messages":    messages,
+		"max_tokens":  o.maxTokens,
 		"temperature": o.temperature,
-		"stream": true,
+		"stream":      true,
 	}
 
 	body, _ := json.Marshal(payload)

@@ -4,7 +4,14 @@ from itertools import islice
 import uuid
 
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, FieldCondition, Filter, MatchValue, PointStruct, VectorParams
+from qdrant_client.http.models import (
+    Distance,
+    FieldCondition,
+    Filter,
+    MatchValue,
+    PointStruct,
+    VectorParams,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,11 +29,7 @@ class QdrantClientAdapter:
         self.api_key = api_key
         self.batch_size = batch_size
 
-        self.client = QdrantClient(
-            url=self.url,
-            api_key=api_key,
-            timeout=120
-        )
+        self.client = QdrantClient(url=self.url, api_key=api_key, timeout=120)
 
     def store_chunks(self, chunks: List[Dict[str, Any]]) -> bool:
         try:
@@ -67,7 +70,7 @@ class QdrantClientAdapter:
 
             for start in range(0, total, self.batch_size):
 
-                batch = points[start:start + self.batch_size]
+                batch = points[start : start + self.batch_size]
 
                 self.client.upsert(
                     collection_name=self.collection_name,
@@ -95,7 +98,9 @@ class QdrantClientAdapter:
             self.client.delete(
                 collection_name=self.collection_name,
                 points_selector=Filter(
-                    must=[FieldCondition(key="document", match=MatchValue(value=doc_id))]
+                    must=[
+                        FieldCondition(key="document", match=MatchValue(value=doc_id))
+                    ]
                 ),
                 wait=True,
             )
@@ -113,7 +118,9 @@ class QdrantClientAdapter:
             logger.error("Qdrant health check failed: %s", exc)
             return False
 
-    def search(self, query_text: str, k: int = 3, where: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def search(
+        self, query_text: str, k: int = 3, where: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         try:
             points, _ = self.client.scroll(
                 collection_name=self.collection_name,
@@ -136,7 +143,9 @@ class QdrantClientAdapter:
                     continue
                 if query_text and query_text.lower() not in document.lower():
                     continue
-                filtered_results.append({"id": point.id, "document": document, "metadata": metadata})
+                filtered_results.append(
+                    {"id": point.id, "document": document, "metadata": metadata}
+                )
 
             filtered_results = filtered_results[:k]
             return {"results": filtered_results}

@@ -1,4 +1,3 @@
-
 import logging
 import json
 import os
@@ -18,33 +17,34 @@ from document_loader import DocumentLoader
 
 logger = logging.getLogger(__name__)
 
+
 class Ingestor:
     def __init__(self, config: IngestorConfig):
         self.config = config
         self.chunker = Chunker(
             chunk_size=config.chunking.chunk_size,
-            chunk_overlap=config.chunking.chunk_overlap
+            chunk_overlap=config.chunking.chunk_overlap,
         )
         self.embedding_provider = get_embedding_provider(
             config.embedding.provider,
-            base_url=getattr(config.embedding, 'url', None),
-            model=getattr(config.embedding, 'model', None),
-            api_key=getattr(config.embedding, 'api_key', None),
-            batch_size=getattr(config.embedding, 'batch_size', None)
+            base_url=getattr(config.embedding, "url", None),
+            model=getattr(config.embedding, "model", None),
+            api_key=getattr(config.embedding, "api_key", None),
+            batch_size=getattr(config.embedding, "batch_size", None),
         )
         self.vectordb_client = get_vectordb_client(
             config.vectordb.provider,
             url=config.vectordb.url,
             collection=config.vectordb.collection,
             api_key=config.vectordb.api_key,
-            batch_size=getattr(config.vectordb, 'batch_size', None)
+            batch_size=getattr(config.vectordb, "batch_size", None),
         )
         self.checkpoint = self._load_checkpoint()
 
     def _load_checkpoint(self) -> Dict:
         if os.path.exists(self.config.checkpoint_file):
             try:
-                with open(self.config.checkpoint_file, 'r') as f:
+                with open(self.config.checkpoint_file, "r") as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Failed to load checkpoint: {e}")
@@ -52,14 +52,14 @@ class Ingestor:
 
     def _save_checkpoint(self):
         try:
-            with open(self.config.checkpoint_file, 'w') as f:
+            with open(self.config.checkpoint_file, "w") as f:
                 json.dump(self.checkpoint, f, indent=2)
         except Exception as e:
             logger.error(f"Failed to save checkpoint: {e}")
 
     def _compute_file_hash(self, file_path: str) -> str:
         try:
-            with open(file_path, 'rb') as f:
+            with open(file_path, "rb") as f:
                 return hashlib.sha256(f.read()).hexdigest()
         except Exception as e:
             logger.error(f"Failed to compute hash for {file_path}: {e}")
@@ -135,9 +135,10 @@ class Ingestor:
             logger.warning(f"Directory not found: {directory}")
             return stats
 
-        for file_path in directory_path.rglob('*'):
+        for file_path in directory_path.rglob("*"):
             stats["total_files"] += 1
-            if not file_path.is_file(): continue
+            if not file_path.is_file():
+                continue
 
             sufix = file_path.suffix.lower()
             if sufix not in DocumentLoader.SUPPORTED_TYPES:
@@ -161,7 +162,7 @@ class Ingestor:
     def delete_document(self, doc_id: str) -> bool:
         # Accept either a file path (checkpoint key) or a document id stored in checkpoint
         # If a file path is provided, resolve the document_id from the checkpoint
-        if doc_id == 'all':
+        if doc_id == "all":
             doc_id = self.config.checkpoint_file
             logger.info(f"Deleting all doc from config {doc_id}")
         document_id = doc_id
@@ -181,7 +182,11 @@ class Ingestor:
                 self._save_checkpoint()
             else:
                 # remove any checkpoint entries matching this document_id
-                to_delete = [k for k, v in self.checkpoint.get("documents", {}).items() if v.get("document_id") == document_id]
+                to_delete = [
+                    k
+                    for k, v in self.checkpoint.get("documents", {}).items()
+                    if v.get("document_id") == document_id
+                ]
                 for k in to_delete:
                     del self.checkpoint["documents"][k]
                 if to_delete:

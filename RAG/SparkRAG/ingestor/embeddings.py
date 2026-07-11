@@ -17,11 +17,11 @@ logger = logging.getLogger(__name__)
 
 class EmbeddingProvider:
     """Base interface for embedding providers."""
+
     def __init__(self):
         pass
 
-    def provision(self, model: str, api_key: str, batch_size: int,
-                     base_url: str):
+    def provision(self, model: str, api_key: str, batch_size: int, base_url: str):
         self.model = model
         self.api_key = api_key
         self.batch_size = batch_size
@@ -61,6 +61,7 @@ class OllamaEmbedding(EmbeddingProvider):
         ollama pull nomic-embed-text
         ollama pull all-minilm
     """
+
     def embed(self, text: str) -> Optional[List[float]]:
         """
         Generate embedding using Ollama API.
@@ -75,7 +76,7 @@ class OllamaEmbedding(EmbeddingProvider):
             response = requests.post(
                 f"{self.base_url}/api/embeddings",
                 json={"model": self.model, "prompt": text},
-                timeout=60
+                timeout=60,
             )
             response.raise_for_status()
             data = response.json()
@@ -113,6 +114,7 @@ class OpenAIEmbedding(EmbeddingProvider):
         - text-embedding-3-large (highest quality)
         - text-embedding-ada-002 (legacy)
     """
+
     # model: str = "text-embedding-3-small"
 
     def embed(self, text: str) -> Optional[List[float]]:
@@ -130,7 +132,7 @@ class OpenAIEmbedding(EmbeddingProvider):
                 "https://api.openai.com/v1/embeddings",
                 json={"input": text, "model": self.model},
                 headers={"Authorization": f"Bearer {self.api_key}"},
-                timeout=60
+                timeout=60,
             )
             response.raise_for_status()
             data = response.json()
@@ -156,12 +158,15 @@ class OpenAIEmbedding(EmbeddingProvider):
                 "https://api.openai.com/v1/embeddings",
                 json={"input": texts, "model": self.model},
                 headers={"Authorization": f"Bearer {self.api_key}"},
-                timeout=60
+                timeout=60,
             )
             response.raise_for_status()
             data = response.json()
             # Sort by index to maintain order
-            embeddings = [item["embedding"] for item in sorted(data["data"], key=lambda x: x["index"])]
+            embeddings = [
+                item["embedding"]
+                for item in sorted(data["data"], key=lambda x: x["index"])
+            ]
             return embeddings
         except Exception as e:
             logger.error(f"OpenAI batch embedding failed: {e}")
@@ -183,8 +188,7 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
     Requires sentence-transformers library.
     """
 
-    def provision(self, model: str, api_key: str, batch_size: int,
-                     base_url: str):
+    def provision(self, model: str, api_key: str, batch_size: int, base_url: str):
         # model: str = "sentence-transformers/all-MiniLM-L6-v2"
         self.model = model
         self.api_key = api_key
@@ -192,6 +196,7 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
         self.base_url = base_url
         try:
             from sentence_transformers import SentenceTransformer
+
             logger.info(f"Loading SentenceTransformer model: {model}")
             self.model = SentenceTransformer(model)
             self.embedding_dim = self.model.get_embedding_dimension()
@@ -219,7 +224,9 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
             Embedding vector or None on error
         """
         if not self._available:
-            logger.error("SentenceTransformer not available. Enable 'embedding.allow_fallback' or install dependencies to use real embeddings.")
+            logger.error(
+                "SentenceTransformer not available. Enable 'embedding.allow_fallback' or install dependencies to use real embeddings."
+            )
             return None
         try:
             embedding = self.model.encode(text)
@@ -241,10 +248,14 @@ class SentenceTransformerEmbedding(EmbeddingProvider):
             List of embeddings or None on error
         """
         if not self._available:
-            logger.error("SentenceTransformer not available. Enable 'embedding.allow_fallback' or install dependencies to use real embeddings.")
+            logger.error(
+                "SentenceTransformer not available. Enable 'embedding.allow_fallback' or install dependencies to use real embeddings."
+            )
             return None
         try:
-            embeddings = self.model.encode(texts, batch_size=32, show_progress_bar=False)
+            embeddings = self.model.encode(
+                texts, batch_size=32, show_progress_bar=False
+            )
             return embeddings.tolist()
         except Exception as e:
             logger.error(f"SentenceTransformer batch embedding failed: {e}")
@@ -279,7 +290,7 @@ class HuggingFaceEmbedding(EmbeddingProvider):
                 self.base_url,
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={"inputs": text},
-                timeout=60
+                timeout=60,
             )
             response.raise_for_status()
             data = response.json()
@@ -306,7 +317,7 @@ class HuggingFaceEmbedding(EmbeddingProvider):
                 self.base_url,
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json={"inputs": texts},
-                timeout=60
+                timeout=60,
             )
             response.raise_for_status()
             return response.json()
@@ -376,9 +387,9 @@ def get_embedding_provider(provider: str, **kwargs) -> EmbeddingProvider:
         )
 
     providerObj.provision(
-            model=kwargs.get("model", "nomic-embed-text"),
-            api_key=kwargs.get("api_key", ""),
-            batch_size=kwargs.get("batch_size", 32),
-            base_url=kwargs.get("base_url", "http://localhost:11434")
-        )
+        model=kwargs.get("model", "nomic-embed-text"),
+        api_key=kwargs.get("api_key", ""),
+        batch_size=kwargs.get("batch_size", 32),
+        base_url=kwargs.get("base_url", "http://localhost:11434"),
+    )
     return providerObj

@@ -22,6 +22,6 @@ fi
 
 
 echo "Starting the Ingestor..."
-/app/rag-ingestor_cli.py store
+/app/rag-ingestor_cli.py $INGESTOR_OPERATION_MODE
 
 tail -f /dev/null

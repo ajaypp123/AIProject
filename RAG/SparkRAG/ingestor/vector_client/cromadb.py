@@ -8,13 +8,14 @@ import chromadb
 
 logger = logging.getLogger(__name__)
 
+
 class ChromaLocalClientAdapterInterface:
 
     def _create_collection(self, collection, client):
         return client.get_or_create_collection(
             name=collection,
-            #embedding_function=embedding_fn,
-            metadata={"hnsw:space": "cosine"}  # cosine is common for semantic search
+            # embedding_function=embedding_fn,
+            metadata={"hnsw:space": "cosine"},  # cosine is common for semantic search
         )
 
     def store_chunks(self, chunks: List[Dict]) -> bool:
@@ -22,11 +23,14 @@ class ChromaLocalClientAdapterInterface:
             ids = [chunk["id"] for chunk in chunks]
             embeddings = [chunk.get("embedding") for chunk in chunks]
             documents = [chunk.get("content", "") for chunk in chunks]
-            metadatas = [{
-                "document": chunk.get("document_id"),
-                "source": chunk.get("source"),
-                "document_type": chunk.get("document_type"),
-            } for chunk in chunks]
+            metadatas = [
+                {
+                    "document": chunk.get("document_id"),
+                    "source": chunk.get("source"),
+                    "document_type": chunk.get("document_type"),
+                }
+                for chunk in chunks
+            ]
 
             self.collection.upsert(
                 ids=ids,
@@ -66,11 +70,13 @@ class ChromaLocalClientAdapterInterface:
                     continue
                 if query_text and query_text.lower() not in document.lower():
                     continue
-                filtered_results.append({
-                    "id": ids[idx] if idx < len(ids) else None,
-                    "document": document,
-                    "metadata": metadata
-                })
+                filtered_results.append(
+                    {
+                        "id": ids[idx] if idx < len(ids) else None,
+                        "document": document,
+                        "metadata": metadata,
+                    }
+                )
 
             filtered_results = filtered_results[:k]
             return {"results": filtered_results}
@@ -87,7 +93,9 @@ class ChromaLocalClientAdapterInterface:
 
 
 class ChromaClientAdapter(ChromaLocalClientAdapterInterface):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size = 100):
+    def __init__(
+        self, url: str, collection: str, api_key: Optional[str] = None, batch_size=100
+    ):
         self.url = url.rstrip("/") if url else "http://localhost:8000"
         self.collection_name = collection
         self.api_key = api_key
@@ -102,7 +110,13 @@ class ChromaClientAdapter(ChromaLocalClientAdapterInterface):
 
 
 class ChromaLocalClientAdapter(ChromaLocalClientAdapterInterface):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+    def __init__(
+        self,
+        url: str,
+        collection: str,
+        api_key: Optional[str] = None,
+        batch_size: int = 100,
+    ):
         croma_db_location = os.getenv("CROMA_DB_LOCATION", url)
         DB_DIR = Path(croma_db_location)
         DB_DIR.mkdir(exist_ok=True)

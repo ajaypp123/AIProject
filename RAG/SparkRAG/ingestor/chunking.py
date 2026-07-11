@@ -1,6 +1,7 @@
 import re
 from typing import List
 
+
 class Chunker:
     def __init__(self, chunk_size: int = 512, chunk_overlap: int = 50):
         self.chunk_size = chunk_size
@@ -36,7 +37,11 @@ class Chunker:
         for i, chunk in enumerate(chunks):
             if i > 0:
                 prev_chunk = chunks[i - 1]
-                overlap_text = prev_chunk[-self.chunk_overlap:] if len(prev_chunk) > self.chunk_overlap else prev_chunk
+                overlap_text = (
+                    prev_chunk[-self.chunk_overlap :]
+                    if len(prev_chunk) > self.chunk_overlap
+                    else prev_chunk
+                )
                 chunk = overlap_text + "\n" + chunk
 
             overlapped_chunks.append(chunk)
@@ -45,7 +50,7 @@ class Chunker:
 
     def _chunk_long_paragraph(self, text: str) -> List[str]:
         # First try to split by sentence boundaries
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        sentences = re.split(r"(?<=[.!?])\s+", text)
         chunks = []
 
         # If there are no sentence boundaries (or a single long sentence),
@@ -99,10 +104,10 @@ class Chunker:
         current_chunk = ""
         current_heading = ""
 
-        lines = text.split('\n')
+        lines = text.split("\n")
 
         for line in lines:
-            heading_match = re.match(r'^(#{1,6})\s+(.+)$', line)
+            heading_match = re.match(r"^(#{1,6})\s+(.+)$", line)
 
             if heading_match:
                 if current_chunk.strip():

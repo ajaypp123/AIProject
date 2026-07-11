@@ -100,7 +100,9 @@ class IngestorAppCli:
         logger.info(f"Using config file: {args.config_file}")
         logger.info("Starting Spark RAG Ingestor")
         logger.info(f"Vector DB: {config.vectordb.provider} at {config.vectordb.url}")
-        logger.info(f"Embedding: {config.embedding.provider} ({config.embedding.model})")
+        logger.info(
+            f"Embedding: {config.embedding.provider} ({config.embedding.model})"
+        )
 
         ingestor = Ingestor(config)
         return args.handler(ingestor, config, args)
@@ -115,7 +117,15 @@ class IngestorAppCli:
 
     def _handle_delete(self, ingestor: Ingestor, config: IngestorConfig, args) -> int:
         if not args.target:
-            print(json.dumps({"deleted": False, "error": "A target file path or document id is required"}, indent=2))
+            print(
+                json.dumps(
+                    {
+                        "deleted": False,
+                        "error": "A target file path or document id is required",
+                    },
+                    indent=2,
+                )
+            )
             return 2
 
         success = ingestor.delete_document(args.target)

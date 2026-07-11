@@ -5,6 +5,7 @@ import logging
 from config import IngestorConfig
 from ingestor import Ingestor
 
+
 def main():
     parser = argparse.ArgumentParser(description="Spark RAG Document Ingestor")
     parser.add_argument("--config", type=str, help="Path to configuration file")
@@ -14,7 +15,7 @@ def main():
 
     logging.basicConfig(
         level=getattr(logging, args.log_level.upper()),
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
 
     config = IngestorConfig(config_file=args.config)
@@ -24,7 +25,7 @@ def main():
     ingestor = Ingestor(config)
 
     logger = logging.getLogger(__name__)
-    
+
     if not ingestor.health_check():
         logger.error("Vector database is not healthy. Exiting.")
         sys.exit(1)
@@ -32,6 +33,7 @@ def main():
     logger.info(f"Ingesting documents from {config.watch_dir}")
     stats = ingestor.ingest_directory(config.watch_dir)
     logger.info(f"Ingestion complete: {stats}")
+
 
 if __name__ == "__main__":
     main()

@@ -7,14 +7,16 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class Document:
     def __init__(self, id: str, content: str, metadata: Dict):
         self.id = id
         self.content = content
         self.metadata = metadata
 
+
 class DocumentLoader:
-    SUPPORTED_TYPES = {'.pdf', '.txt', '.md', '.csv', '.json', '.html'}
+    SUPPORTED_TYPES = {".pdf", ".txt", ".md", ".csv", ".json", ".html"}
 
     def load(self, file_path: str) -> Optional[Document]:
         file_path = Path(file_path)
@@ -26,17 +28,17 @@ class DocumentLoader:
         suffix = file_path.suffix.lower()
 
         try:
-            if suffix == '.pdf':
+            if suffix == ".pdf":
                 return self._load_pdf(file_path)
-            elif suffix == '.txt':
+            elif suffix == ".txt":
                 return self._load_text(file_path)
-            elif suffix == '.md':
+            elif suffix == ".md":
                 return self._load_markdown(file_path)
-            elif suffix == '.csv':
+            elif suffix == ".csv":
                 return self._load_csv(file_path)
-            elif suffix == '.json':
+            elif suffix == ".json":
                 return self._load_json(file_path)
-            elif suffix == '.html':
+            elif suffix == ".html":
                 return self._load_html(file_path)
             else:
                 logger.warning(f"Unsupported file type: {suffix}")
@@ -50,7 +52,9 @@ class DocumentLoader:
             try:
                 from pypdf import PdfReader
             except ImportError:
-                logger.warning("PDF parsing requires 'pypdf'. Install with: pip install pypdf")
+                logger.warning(
+                    "PDF parsing requires 'pypdf'. Install with: pip install pypdf"
+                )
                 return None
 
             reader = PdfReader(str(file_path))
@@ -62,57 +66,51 @@ class DocumentLoader:
             metadata = {
                 "source": str(file_path),
                 "document_type": "pdf",
-                "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                "last_modified": datetime.fromtimestamp(
+                    file_path.stat().st_mtime
+                ).isoformat(),
                 "filename": file_path.name,
             }
 
-            return Document(
-                id=file_path.stem,
-                content=content,
-                metadata=metadata
-            )
+            return Document(id=file_path.stem, content=content, metadata=metadata)
         except Exception as e:
             logger.error(f"PDF loading failed: {e}")
             return None
 
     def _load_text(self, file_path: Path) -> Optional[Document]:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             metadata = {
                 "source": str(file_path),
                 "document_type": "text",
-                "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                "last_modified": datetime.fromtimestamp(
+                    file_path.stat().st_mtime
+                ).isoformat(),
                 "filename": file_path.name,
             }
 
-            return Document(
-                id=file_path.stem,
-                content=content,
-                metadata=metadata
-            )
+            return Document(id=file_path.stem, content=content, metadata=metadata)
         except Exception as e:
             logger.error(f"Text loading failed: {e}")
             return None
 
     def _load_markdown(self, file_path: Path) -> Optional[Document]:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             metadata = {
                 "source": str(file_path),
                 "document_type": "markdown",
-                "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                "last_modified": datetime.fromtimestamp(
+                    file_path.stat().st_mtime
+                ).isoformat(),
                 "filename": file_path.name,
             }
 
-            return Document(
-                id=file_path.stem,
-                content=content,
-                metadata=metadata
-            )
+            return Document(id=file_path.stem, content=content, metadata=metadata)
         except Exception as e:
             logger.error(f"Markdown loading failed: {e}")
             return None
@@ -120,7 +118,7 @@ class DocumentLoader:
     def _load_csv(self, file_path: Path) -> Optional[Document]:
         try:
             rows = []
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     rows.append(row)
@@ -136,23 +134,21 @@ class DocumentLoader:
             metadata = {
                 "source": str(file_path),
                 "document_type": "csv",
-                "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                "last_modified": datetime.fromtimestamp(
+                    file_path.stat().st_mtime
+                ).isoformat(),
                 "filename": file_path.name,
                 "row_count": len(rows),
             }
 
-            return Document(
-                id=file_path.stem,
-                content=content,
-                metadata=metadata
-            )
+            return Document(id=file_path.stem, content=content, metadata=metadata)
         except Exception as e:
             logger.error(f"CSV loading failed: {e}")
             return None
 
     def _load_json(self, file_path: Path) -> Optional[Document]:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             content = json.dumps(data, indent=2)
@@ -160,15 +156,13 @@ class DocumentLoader:
             metadata = {
                 "source": str(file_path),
                 "document_type": "json",
-                "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                "last_modified": datetime.fromtimestamp(
+                    file_path.stat().st_mtime
+                ).isoformat(),
                 "filename": file_path.name,
             }
 
-            return Document(
-                id=file_path.stem,
-                content=content,
-                metadata=metadata
-            )
+            return Document(id=file_path.stem, content=content, metadata=metadata)
         except Exception as e:
             logger.error(f"JSON loading failed: {e}")
             return None
@@ -187,7 +181,7 @@ class DocumentLoader:
                     if text:
                         self.text.append(text)
 
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 html = f.read()
 
             extractor = TextExtractor()
@@ -197,15 +191,13 @@ class DocumentLoader:
             metadata = {
                 "source": str(file_path),
                 "document_type": "html",
-                "last_modified": datetime.fromtimestamp(file_path.stat().st_mtime).isoformat(),
+                "last_modified": datetime.fromtimestamp(
+                    file_path.stat().st_mtime
+                ).isoformat(),
                 "filename": file_path.name,
             }
 
-            return Document(
-                id=file_path.stem,
-                content=content,
-                metadata=metadata
-            )
+            return Document(id=file_path.stem, content=content, metadata=metadata)
         except Exception as e:
             logger.error(f"HTML loading failed: {e}")
             return None

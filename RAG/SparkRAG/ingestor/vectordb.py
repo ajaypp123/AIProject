@@ -37,7 +37,13 @@ class VectorDBClient:
 
 
 class QdrantClient(VectorDBClient):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+    def __init__(
+        self,
+        url: str,
+        collection: str,
+        api_key: Optional[str] = None,
+        batch_size: int = 100,
+    ):
         super().__init__(url, collection, api_key, batch_size)
         self._client = QdrantClientAdapter(url, collection, api_key, batch_size)
 
@@ -55,7 +61,13 @@ class QdrantClient(VectorDBClient):
 
 
 class ChromaClient(VectorDBClient):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+    def __init__(
+        self,
+        url: str,
+        collection: str,
+        api_key: Optional[str] = None,
+        batch_size: int = 100,
+    ):
         super().__init__(url, collection, api_key, batch_size)
         self._client = ChromaClientAdapter(url, collection, api_key, batch_size)
 
@@ -73,7 +85,13 @@ class ChromaClient(VectorDBClient):
 
 
 class ChromaLocalClient(VectorDBClient):
-    def __init__(self, url: str, collection: str, api_key: Optional[str] = None, batch_size: int = 100):
+    def __init__(
+        self,
+        url: str,
+        collection: str,
+        api_key: Optional[str] = None,
+        batch_size: int = 100,
+    ):
         super().__init__(url, collection, api_key, batch_size)
         self._client = ChromaLocalClientAdapter(url, collection, api_key, batch_size)
 

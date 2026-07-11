@@ -1,5 +1,6 @@
 .PHONY: help build run test lint fmt docker clean compose-up compose-down compose-logs init
 
+# help target to display available make targets
 help:
 	@echo "Spark RAG Platform - Available targets:"
 	@echo "  make init           - Initialize project"
@@ -14,14 +15,17 @@ help:
 	@echo "  make compose-logs   - View docker-compose logs"
 	@echo "  make clean          - Clean build artifacts"
 
+# init application, create volumes, install dependencies locally
 init:
 	@echo "Initializing Spark RAG Platform..."
-	mkdir -p /data /data/ollama_storage /data/qdrant_storage
-	cd api && go mod tidy && go mod vendor
-	cd ingestor && pip install -r requirements.txt
-	cd ui && npm install
+	@echo "Make sure /data directory is writable by the current user."
+	mkdir -p /data /data/ollama_storage /data/qdrant_storage /data/ingestor
+	cp -rf ./data /data/ingestor/
+	@echo "All documents for rag-ingestor are copied to /data/ingestor/data"
+	ls /data/ingestor/data
 	@echo "Initialization complete!"
 
+# build all application components locally (Go API, Python Ingestor, React UI)
 build: build-api build-ingestor build-ui
 	@echo "All components built successfully!"
 
@@ -46,25 +50,30 @@ run:
 	@echo "Infrastructure running. Start API in another terminal: cd api && go run ."
 	@echo "And start UI: cd ui && npm start"
 
+# Perform tests for Go and Python code
 test:
 	@echo "Running Go tests..."
 	cd api && go test -v -cover ./...
 	@echo "Running Python tests..."
+	pip install pytest pytest-cov
 	cd ingestor && python -m pytest tests/ -v --cov
 	@echo "All tests passed!"
 
+# Run linters for Go and Python code
 lint:
 	@echo "Running linters..."
 	cd api && go vet ./...
 	cd ingestor && pylint ./ || true
 	@echo "Linting complete!"
 
+# Format code for Go and Python
 fmt:
 	@echo "Formatting code..."
 	cd api && gofmt -s -w .
 	cd ingestor && black . --quiet
 	@echo "Code formatted!"
 
+# Build Docker images for API, Ingestor, and UI
 docker-build: docker-build-spark-rag-api docker-build-spark-rag-ingestor docker-build-spark-rag-ui
 	@echo "Building Docker images..."
 	docker build -f Dockerfile.api -t spark-rag-api:latest .

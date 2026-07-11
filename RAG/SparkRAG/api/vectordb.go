@@ -35,8 +35,8 @@ func NewQdrantVectorDB(url, collection string) *QdrantVectorDB {
 
 func (q *QdrantVectorDB) Search(ctx context.Context, embedding []float32, topK int, filters map[string]interface{}) ([]SearchResult, error) {
 	payload := map[string]interface{}{
-		"vector": embedding,
-		"limit":  topK,
+		"vector":       embedding,
+		"limit":        topK,
 		"with_vectors": true,
 		"with_payload": true,
 	}
@@ -96,17 +96,17 @@ func (q *QdrantVectorDB) Search(ctx context.Context, embedding []float32, topK i
 func (q *QdrantVectorDB) Store(ctx context.Context, doc Document) error {
 	for _, chunk := range doc.Chunks {
 		payload := map[string]interface{}{
-			"document": doc.ID,
-			"title": doc.Title,
-			"content": chunk.Content,
-			"source": doc.Source,
+			"document":      doc.ID,
+			"title":         doc.Title,
+			"content":       chunk.Content,
+			"source":        doc.Source,
 			"document_type": doc.DocumentType,
-			"chunk_id": chunk.ID,
+			"chunk_id":      chunk.ID,
 		}
 
 		point := map[string]interface{}{
-			"id": chunk.ID,
-			"vector": chunk.Embedding,
+			"id":      chunk.ID,
+			"vector":  chunk.Embedding,
 			"payload": payload,
 		}
 
@@ -180,7 +180,7 @@ func (q *QdrantVectorDB) Stats(ctx context.Context) (map[string]interface{}, err
 
 	if resp.StatusCode == 404 {
 		return map[string]interface{}{
-			"exists": false,
+			"exists":       false,
 			"points_count": 0,
 		}, nil
 	}
@@ -193,7 +193,7 @@ func (q *QdrantVectorDB) Stats(ctx context.Context) (map[string]interface{}, err
 	json.NewDecoder(resp.Body).Decode(&result)
 
 	return map[string]interface{}{
-		"exists": true,
+		"exists":       true,
 		"points_count": result.Result.PointsCount,
 	}, nil
 }
@@ -239,8 +239,8 @@ func NewChromaVectorDB(url, collection string) *ChromaVectorDB {
 func (c *ChromaVectorDB) Search(ctx context.Context, embedding []float32, topK int, filters map[string]interface{}) ([]SearchResult, error) {
 	payload := map[string]interface{}{
 		"query_embeddings": [][]float32{embedding},
-		"n_results": topK,
-		"include": []string{"embeddings", "metadatas", "documents", "distances"},
+		"n_results":        topK,
+		"include":          []string{"embeddings", "metadatas", "documents", "distances"},
 	}
 
 	if len(filters) > 0 {
@@ -282,8 +282,8 @@ func (c *ChromaVectorDB) Search(ctx context.Context, embedding []float32, topK i
 
 			sr := SearchResult{
 				Document: doc,
-				Content: doc,
-				Score: distance,
+				Content:  doc,
+				Score:    distance,
 				Metadata: meta,
 				Citation: Citation{
 					Score: distance,
@@ -309,18 +309,18 @@ func (c *ChromaVectorDB) Store(ctx context.Context, doc Document) error {
 		documents = append(documents, chunk.Content)
 
 		meta := map[string]interface{}{
-			"document": doc.ID,
-			"source": doc.Source,
+			"document":      doc.ID,
+			"source":        doc.Source,
 			"document_type": doc.DocumentType,
 		}
 		metadatas = append(metadatas, meta)
 	}
 
 	payload := map[string]interface{}{
-		"ids": ids,
+		"ids":        ids,
 		"embeddings": embeddings,
-		"metadatas": metadatas,
-		"documents": documents,
+		"metadatas":  metadatas,
+		"documents":  documents,
 	}
 
 	body, _ := json.Marshal(payload)
