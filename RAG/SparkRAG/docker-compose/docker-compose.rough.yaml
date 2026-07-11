@@ -1,0 +1,183 @@
+version: '3.9'
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: spark-rag-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant-storage:/qdrant/storage
+    environment:
+      QDRANT_API_KEY: ${QDRANT_API_KEY:-changeme}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spark-rag
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: spark-rag-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-storage:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spark-rag
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  spark-rag-embedding-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.embedding-service
+    container_name: spark-rag-embedding-service
+    ports:
+      - "8001:8000"
+    environment:
+      MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spark-rag
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  spark-rag-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: spark-rag-api
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SERVER_HOST: 0.0.0.0
+      VECTORDB_PROVIDER: qdrant
+      VECTORDB_URL: http://qdrant:6333
+      VECTORDB_COLLECTION: spark-rag
+      EMBEDDING_PROVIDER: ollama
+      EMBEDDING_MODEL: nomic-embed-text
+      LLM_PROVIDER: ollama
+      LLM_URL: http://ollama:11434
+      LLM_MODEL: mistral
+      LOG_LEVEL: info
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks:
+      - spark-rag
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spark-rag-ingestor:
+    build:
+      context: .
+      dockerfile: Dockerfile.ingestor
+    container_name: spark-rag-ingestor
+    environment:
+      VECTORDB_PROVIDER: qdrant
+      VECTORDB_URL: http://qdrant:6333
+      VECTORDB_COLLECTION: spark-rag
+      EMBEDDING_PROVIDER: ollama
+      EMBEDDING_MODEL: nomic-embed-text
+      INGESTOR_WATCH_DIR: /data
+      LOG_LEVEL: info
+    volumes:
+      - ./data:/data:ro
+      - ingestor-checkpoint:/app
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks:
+      - spark-rag
+
+  spark-rag-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    container_name: spark-rag-ui
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8080/api
+    depends_on:
+      - spark-rag-api
+    networks:
+      - spark-rag
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  qdrant-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/qdrant_storage
+  ollama-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/ollama_storage
+  ingestor-checkpoint:
+    driver: local
+
+networks:
+  spark-rag:
+    driver: bridge
+
+x-chroma-service: &chroma-service
+  image: chromadb/chroma:latest
+  container_name: spark-rag-chroma
+  ports:
+    - "8000:8000"
+  volumes:
+    - chroma-storage:/chroma/chroma
+  environment:
+    IS_PERSISTENT: "true"
+    PERSIST_DIRECTORY: /chroma/chroma
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  networks:
+    - spark-rag
+
+x-chroma-volume:
+  chroma-storage:
+    driver: local

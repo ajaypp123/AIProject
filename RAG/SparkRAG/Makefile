@@ -44,11 +44,28 @@ build-ui:
 	cd ui && npm install
 	@echo "UI built successfully!"
 
-run:
+# run the application locally (development mode)
+run-app-locally: build run-ingestor run-rag-ui
+	@echo "Spark RAG Platform is running locally (development mode)."
+
+run-infra: init
 	@echo "Starting Spark RAG Platform (development mode)..."
-	docker-compose up -d qdrant ollama
-	@echo "Infrastructure running. Start API in another terminal: cd api && go run ."
-	@echo "And start UI: cd ui && npm start"
+	cd ./docker-compose && docker compose -f ./docker-compose.yml up -d qdrant ollama
+	@echo "Waiting for infrastructure to be ready..."
+	# sleep 2m
+	@echo "Infrastructure running."
+
+run-ingestor: run-infra
+	@echo "Running Ingestor..."
+	cd ingestor && python rag-ingestor_cli.py store --conf ../docker-compose/config/config.local.yaml
+	@echo "Ingestor finished."
+
+run-rag-ui: run-infra
+	@echo "Running RAG API..."
+	cd api && pkill -f spark-rag-api && ./bin/spark-rag-api --config ../docker-compose/config/config.local.yaml &
+	@echo "Running RAG UI..."
+	cd ui && npm run dev
+	@echo "RAG UI running at http://localhost:3000"
 
 # Perform tests for Go and Python code
 test:
@@ -75,10 +92,6 @@ fmt:
 
 # Build Docker images for API, Ingestor, and UI
 docker-build: docker-build-spark-rag-api docker-build-spark-rag-ingestor docker-build-spark-rag-ui
-	@echo "Building Docker images..."
-	docker build -f Dockerfile.api -t spark-rag-api:latest .
-	docker build -f Dockerfile.ingestor -t spark-rag-ingestor:latest .
-	docker build -f Dockerfile.ui -t spark-rag-ui:latest .
 	@echo "All Docker images built successfully!"
 
 docker-build-spark-rag-api:
@@ -105,16 +118,16 @@ compose-up:
 
 compose-down:
 	@echo "Stopping Docker Compose..."
-	docker-compose down
-	@echo "Services stopped!"
+	cd ./docker-compose && docker compose -f ./docker-compose.yml down -v
+	@echo "Stopped all services."
 
 compose-logs:
 	docker-compose logs -f
 
 clean:
 	@echo "Cleaning build artifacts..."
-	rm -f api/spark-rag-api
-	rm -rf ui/build
-	rm -rf api/.env.local
+	rm -rf ui/build ui/node_modules ui/package-lock.json
+	rm -rf api/.env.local api/vendor/ api/bin/spark-rag-api
+	rm -rf ingestor/.pytest_cache
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@echo "Clean complete!"

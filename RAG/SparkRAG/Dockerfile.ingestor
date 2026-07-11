@@ -17,4 +17,4 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 
-CMD ["tail", "-f", "/dev/null"]
+CMD ["/app/rag-ingestor_cli.py", "store"]
