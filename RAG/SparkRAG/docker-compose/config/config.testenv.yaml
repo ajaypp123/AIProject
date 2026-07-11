@@ -1,0 +1,46 @@
+# Spark RAG - Development Configuration
+# Used for local development with Ollama (all local, no API keys needed)
+
+server:
+  port: 8080
+  host: "0.0.0.0"
+
+llm:
+  provider: "ollama"
+  url: "http://localhost:11434"
+  model: "gemma3:4b"
+  api_key: ""
+  max_tokens: 2048
+  temperature: 0.7
+
+# ingestor configuration
+vectordb:
+  provider: "qdrant"
+  url: "http://qdrant:6333"
+  api_key: "b56c8c78-7cff-11f1-8f9c-00155dbf27d9"
+  collection: "spark-rag-collection"
+  batch_size: 100
+
+embedding:
+  provider: "ollama"
+  model: "nomic-embed-text"
+  api_key: ""
+  url: "http://ollama:11434"
+  batch_size: 32
+
+chunking:
+  top_k: 5
+  chunk_size: 512
+  chunk_overlap: 50
+  reranker_enabled: false
+  reranker_model: ""
+  strategy: "similarity"
+  score_threshold: 0.5
+
+ingestion:
+  watch_dir: "/data/ingestor/data"
+  checkpoint: "/data/ingestor/.ingestor.json"
+  skip_existing: true
+
+logging:
+  level: "INFO"

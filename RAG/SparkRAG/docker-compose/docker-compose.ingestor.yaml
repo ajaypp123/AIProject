@@ -1,0 +1,86 @@
+
+# docker compose -f docker-compose.ingestor.yaml down -v
+# docker compose -f docker-compose.ingestor.yaml up
+
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: spark-rag-qdrant
+    ports:
+      - "6333:6333"  # REST API
+      - "6334:6334"  # gRPC API (optional
+    volumes:
+      - ./scripts:/scripts
+      - qdrant-storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__API_KEY=b56c8c78-7cff-11f1-8f9c-00155dbf27d9
+      - QDRANT__LOG_LEVEL=INFO
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    networks:
+      - spark-rag
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: spark-rag-ollama
+    ports:
+      - "8898:8983"
+      - "11434:11434"
+    volumes:
+      - ollama-storage:/root/.ollama
+      - ./scripts:/scripts
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "/scripts/run_ollama.sh"]
+    networks:
+      - spark-rag
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  spark-rag-ingestor:
+    build:
+      context: ../
+      dockerfile: Dockerfile.ingestor
+    container_name: spark-rag-ingestor
+    environment:
+      INGESTOR_CONFIG_FILE: /config/config.testenv.yaml
+      INGESTOR_OPERATION_MODE: "store"
+    volumes:
+      - ./config:/config:ro
+      - ingestor:/data/ingestor:rw
+      - ./scripts:/scripts
+    entrypoint: ["/bin/sh", "/scripts/run_ingestor.sh"]
+    networks:
+      - spark-rag
+
+
+volumes:
+  qdrant-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/qdrant_storage
+  ollama-storage:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/ollama_storage
+  ingestor:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /data/ingestor
+
+networks:
+  spark-rag:
+    driver: bridge

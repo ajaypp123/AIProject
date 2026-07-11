@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 """
 version:
@@ -75,7 +76,7 @@ class IngestorAppCli:
             "target",
             nargs="?",
             default=None,
-            help="File path or document id to delete",
+            help="File path or document id to delete. ('all' to delete all ids)",
         )
         delete_parser.set_defaults(handler=self._handle_delete)
 

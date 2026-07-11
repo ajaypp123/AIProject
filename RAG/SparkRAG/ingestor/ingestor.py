@@ -161,6 +161,9 @@ class Ingestor:
     def delete_document(self, doc_id: str) -> bool:
         # Accept either a file path (checkpoint key) or a document id stored in checkpoint
         # If a file path is provided, resolve the document_id from the checkpoint
+        if doc_id == 'all':
+            doc_id = self.config.checkpoint_file
+            logger.info(f"Deleting all doc from config {doc_id}")
         document_id = doc_id
         file_key = None
         if doc_id in self.checkpoint.get("documents", {}):

@@ -8,7 +8,7 @@ help:
 	@echo "  make test           - Run tests"
 	@echo "  make lint           - Run linters"
 	@echo "  make fmt            - Format code"
-	@echo "  make docker         - Build Docker images"
+	@echo "  make docker-build   - Build Docker images"
 	@echo "  make compose-up     - Start docker-compose"
 	@echo "  make compose-down   - Stop docker-compose"
 	@echo "  make compose-logs   - View docker-compose logs"
@@ -16,8 +16,8 @@ help:
 
 init:
 	@echo "Initializing Spark RAG Platform..."
-	mkdir -p data
-	cd api && go mod tidy
+	mkdir -p /data /data/ollama_storage /data/qdrant_storage
+	cd api && go mod tidy && go mod vendor
 	cd ingestor && pip install -r requirements.txt
 	cd ui && npm install
 	@echo "Initialization complete!"
@@ -27,7 +27,7 @@ build: build-api build-ingestor build-ui
 
 build-api:
 	@echo "Building Go API..."
-	cd api && go build -o spark-rag-api .
+	cd api && go build -o ./bin/spark-rag-api .
 	@echo "API built successfully!"
 
 build-ingestor:
@@ -37,7 +37,7 @@ build-ingestor:
 
 build-ui:
 	@echo "Building React UI..."
-	cd ui && npm run build
+	cd ui && npm install
 	@echo "UI built successfully!"
 
 run:
@@ -56,7 +56,7 @@ test:
 lint:
 	@echo "Running linters..."
 	cd api && go vet ./...
-	cd ingestor && pylint ingestor/ || true
+	cd ingestor && pylint ./ || true
 	@echo "Linting complete!"
 
 fmt:
@@ -65,12 +65,27 @@ fmt:
 	cd ingestor && black . --quiet
 	@echo "Code formatted!"
 
-docker:
+docker-build: docker-build-spark-rag-api docker-build-spark-rag-ingestor docker-build-spark-rag-ui
 	@echo "Building Docker images..."
 	docker build -f Dockerfile.api -t spark-rag-api:latest .
 	docker build -f Dockerfile.ingestor -t spark-rag-ingestor:latest .
 	docker build -f Dockerfile.ui -t spark-rag-ui:latest .
-	@echo "Docker images built successfully!"
+	@echo "All Docker images built successfully!"
+
+docker-build-spark-rag-api:
+	@echo "Building API Docker images..."
+	docker build -f Dockerfile.api -t spark-rag-api:latest .
+	@echo "All Docker images built successfully!"
+
+docker-build-spark-rag-ingestor:
+	@echo "Building Ingestor Docker images..."
+	docker build -f Dockerfile.ingestor -t spark-rag-ingestor:latest .
+	@echo "All Docker images built successfully!"
+
+docker-build-spark-rag-ui:
+	@echo "Building UI Docker images..."
+	docker build -f Dockerfile.ui -t spark-rag-ui:latest .
+	@echo "All Docker images built successfully!"
 
 compose-up:
 	@echo "Starting Docker Compose..."
