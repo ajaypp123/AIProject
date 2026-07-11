@@ -7,7 +7,7 @@ server:
 
 llm:
   provider: "ollama"
-  url: "http://localhost:11434"
+  url: "http://ollama:11434"
   model: "gemma3:4b"
   api_key: ""
   max_tokens: 2048
@@ -17,8 +17,8 @@ llm:
 vectordb:
   provider: "qdrant"
   url: "http://qdrant:6333"
-  api_key: "b56c8c78-7cff-11f1-8f9c-00155dbf27d9"
-  collection: "spark-rag-collection"
+  api_key: ""
+  collection: "spark-tech-rag"
   batch_size: 100
 
 embedding:

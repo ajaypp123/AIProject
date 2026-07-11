@@ -20,13 +20,15 @@ COPY --from=builder /app/build ./build
 
 EXPOSE 3000
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        curl \
-        netcat-openbsd \
-        iputils-ping \
-        procps \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    bash \
+    curl \
+    jq \
+    busybox-extras \
+    bind-tools \
+    iputils \
+    procps \
+    ca-certificates
 
 USER node
 

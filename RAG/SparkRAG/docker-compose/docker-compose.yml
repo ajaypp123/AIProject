@@ -14,7 +14,7 @@ services:
       - ./scripts:/scripts
       - qdrant-storage:/qdrant/storage
     environment:
-      - QDRANT__SERVICE__API_KEY=b56c8c78-7cff-11f1-8f9c-00155dbf27d9
+      # - QDRANT__SERVICE__API_KEY=b56c8c78-7cff-11f1-8f9c-00155dbf27d9
       - QDRANT__LOG_LEVEL=INFO
       - QDRANT__SERVICE__HTTP_PORT=6333
       - QDRANT__SERVICE__GRPC_PORT=6334
@@ -44,12 +44,13 @@ services:
               capabilities: [gpu]
 
   spark-rag-ingestor:
+    image: spark-rag-ingestor:latest
     build:
       context: ../
       dockerfile: Dockerfile.ingestor
     container_name: spark-rag-ingestor
     environment:
-      INGESTOR_CONFIG_FILE: /config/config.testenv.yaml
+      INGESTOR_CONFIG_FILE: /config/config.docker.yaml
       INGESTOR_OPERATION_MODE: "store"
     volumes:
       - ./config:/config:ro
@@ -59,6 +60,54 @@ services:
     networks:
       - spark-rag
 
+  spark-rag-api:
+    image: spark-rag-api:latest
+    build:
+      context: ../
+      dockerfile: Dockerfile.api
+    container_name: spark-rag-api
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      SERVER_HOST: 0.0.0.0
+    entrypoint: ["/bin/sh", "/scripts/run_api.sh"]
+    volumes:
+      - ./config:/config:ro
+      - ingestor:/data/ingestor:rw
+      - ./scripts:/scripts
+    #depends_on:
+    #  qdrant:
+    #    condition: service_healthy
+    #  ollama:
+    #    condition: service_healthy
+    networks:
+      - spark-rag
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spark-rag-ui:
+    image: spark-rag-ui:latest
+    build:
+      context: ../
+      dockerfile: Dockerfile.ui
+    container_name: spark-rag-ui
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://spark-rag-api:8080/api
+    depends_on:
+      - spark-rag-api
+    networks:
+      - spark-rag
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   qdrant-storage:

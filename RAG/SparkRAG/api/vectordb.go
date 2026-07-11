@@ -113,6 +113,7 @@ func (q *QdrantVectorDB) Store(ctx context.Context, doc Document) error {
 		body, _ := json.Marshal(map[string]interface{}{"points": []interface{}{point}})
 		req, _ := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%s/collections/%s/points?wait=true", q.baseURL, q.collection), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
+		// req.Header.Set("api-key", q.apiKey)
 
 		resp, err := q.httpClient.Do(req)
 		if err != nil {

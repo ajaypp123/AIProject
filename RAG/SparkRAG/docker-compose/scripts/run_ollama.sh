@@ -10,6 +10,9 @@ ollama pull gemma3:4b
 ollama pull nomic-embed-text
 ollama list
 
-sleep infinity  # Keep the script running to keep Ollama alive
+ollama run gemma3:4b
+ollama run nomic-embed-text
 
 echo "Ollama is ready, with model...."
+
+sleep infinity  # Keep the script running to keep Ollama alive

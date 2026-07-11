@@ -32,4 +32,4 @@ EXPOSE 8080
 
 USER nobody
 
-CMD ["/app/api/spark-rag-api"]
+CMD ["/app/spark-rag-api"]

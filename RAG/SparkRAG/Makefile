@@ -3,17 +3,17 @@
 # help target to display available make targets
 help:
 	@echo "Spark RAG Platform - Available targets:"
-	@echo "  make init           - Initialize project"
-	@echo "  make build          - Build all components"
-	@echo "  make run            - Run locally (development)"
-	@echo "  make test           - Run tests"
-	@echo "  make lint           - Run linters"
-	@echo "  make fmt            - Format code"
-	@echo "  make docker-build   - Build Docker images"
-	@echo "  make compose-up     - Start docker-compose"
-	@echo "  make compose-down   - Stop docker-compose"
-	@echo "  make compose-logs   - View docker-compose logs"
-	@echo "  make clean          - Clean build artifacts"
+	@echo "  make init           			- Initialize project"
+	@echo "  make build          			- Build all components (ui, api, ingestor)"
+	@echo "  make run-app-locally			- Run all component locally (development)"
+	@echo "  make test           			- Run all component test cases"
+	@echo "  make lint           			- Run linters"
+	@echo "  make fmt            			- Format code"
+	@echo "  make docker-build   			- Build Docker images for all components"
+	@echo "  make run-docker-services     		- Start docker-compose services"
+	@echo "  make stop-docker-services   		- Stop docker-compose services"
+	@echo "  make show-component-logs   		- View docker-compose logs for all services"
+	@echo "  make clean          			- Clean build artifacts and stop running services"
 
 # init application, create volumes, install dependencies locally
 init:
@@ -44,10 +44,7 @@ build-ui:
 	cd ui && npm install
 	@echo "UI built successfully!"
 
-# run the application locally (development mode)
-run-app-locally: build run-ingestor run-rag-ui
-	@echo "Spark RAG Platform is running locally (development mode)."
-
+# run-infra target to start Qdrant and Ollama services using Docker Compose
 run-infra: init
 	@echo "Starting Spark RAG Platform (development mode)..."
 	cd ./docker-compose && docker compose -f ./docker-compose.yml up -d qdrant ollama
@@ -55,17 +52,25 @@ run-infra: init
 	# sleep 2m
 	@echo "Infrastructure running."
 
+# run the application locally (development mode)
+run-app-locally: build run-ingestor run-rag-ui
+	@echo "Spark RAG Platform is running locally (development mode)."
+
 run-ingestor: run-infra
 	@echo "Running Ingestor..."
 	cd ingestor && python rag-ingestor_cli.py store --conf ../docker-compose/config/config.local.yaml
 	@echo "Ingestor finished."
 
 run-rag-ui: run-infra
-	@echo "Running RAG API..."
-	cd api && pkill -f spark-rag-api && ./bin/spark-rag-api --config ../docker-compose/config/config.local.yaml &
-	@echo "Running RAG UI..."
-	cd ui && npm run dev
-	@echo "RAG UI running at http://localhost:3000"
+	@echo ""
+	@echo "Starting API..."
+	@(cd api && ./bin/spark-rag-api --config ../docker-compose/config/config.local.yaml > api.log 2>&1 &)
+	@echo "Starting UI..."
+	@(cd ui && npm run dev > ui.log 2>&1 &)
+	@echo "==============================="
+	@echo "API : http://localhost:8080"
+	@echo "UI  : http://localhost:3000"
+	@echo "==============================="
 
 # Perform tests for Go and Python code
 test:
@@ -109,20 +114,22 @@ docker-build-spark-rag-ui:
 	docker build -f Dockerfile.ui -t spark-rag-ui:latest .
 	@echo "All Docker images built successfully!"
 
-compose-up:
+run-docker-services:
 	@echo "Starting Docker Compose..."
-	docker-compose up -d
+	cd ./docker-compose && docker compose -f ./docker-compose.yml up -d
 	@echo "Services starting. Use 'make compose-logs' to view logs."
+	@echo "================================"
 	@echo "UI: http://localhost:3000"
 	@echo "API: http://localhost:8080"
+	@echo "================================"
 
-compose-down:
+stop-docker-services:
 	@echo "Stopping Docker Compose..."
 	cd ./docker-compose && docker compose -f ./docker-compose.yml down -v
 	@echo "Stopped all services."
 
-compose-logs:
-	docker-compose logs -f
+show-component-logs:
+	cd ./docker-compose && docker compose -f ./docker-compose.yml logs -f
 
 clean:
 	@echo "Cleaning build artifacts..."
@@ -130,4 +137,6 @@ clean:
 	rm -rf api/.env.local api/vendor/ api/bin/spark-rag-api
 	rm -rf ingestor/.pytest_cache
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	pkill -f spark-rag-api
+	fuser -k 3000/tcp
 	@echo "Clean complete!"
