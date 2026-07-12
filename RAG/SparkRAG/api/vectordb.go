@@ -23,13 +23,17 @@ type QdrantVectorDB struct {
 	baseURL    string
 	collection string
 	httpClient *http.Client
+	apiKey     string
+	batchSize  int
 }
 
-func NewQdrantVectorDB(url, collection string) *QdrantVectorDB {
+func NewQdrantVectorDB(url, collection string, apiKey string, batchSize int) *QdrantVectorDB {
 	return &QdrantVectorDB{
 		baseURL:    url,
 		collection: collection,
 		httpClient: &http.Client{Timeout: 30 * time.Second},
+		apiKey:     apiKey,
+		batchSize:  batchSize,
 	}
 }
 
@@ -46,8 +50,13 @@ func (q *QdrantVectorDB) Search(ctx context.Context, embedding []float32, topK i
 	}
 
 	body, _ := json.Marshal(payload)
-	req, _ := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/collections/%s/points/search", q.baseURL, q.collection), bytes.NewBuffer(body))
+	url := fmt.Sprintf("%s/collections/%s/points/search", q.baseURL, q.collection)
+
+	req, _ := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	if q.apiKey != "" {
+		req.Header.Set("api-key", fmt.Sprintf("%s", q.apiKey))
+	}
 
 	resp, err := q.httpClient.Do(req)
 	if err != nil {
@@ -113,7 +122,9 @@ func (q *QdrantVectorDB) Store(ctx context.Context, doc Document) error {
 		body, _ := json.Marshal(map[string]interface{}{"points": []interface{}{point}})
 		req, _ := http.NewRequestWithContext(ctx, "PUT", fmt.Sprintf("%s/collections/%s/points?wait=true", q.baseURL, q.collection), bytes.NewBuffer(body))
 		req.Header.Set("Content-Type", "application/json")
-		// req.Header.Set("api-key", q.apiKey)
+		if q.apiKey != "" {
+			req.Header.Set("api-key", fmt.Sprintf("%s", q.apiKey))
+		}
 
 		resp, err := q.httpClient.Do(req)
 		if err != nil {
@@ -144,6 +155,9 @@ func (q *QdrantVectorDB) Delete(ctx context.Context, docID string) error {
 	body, _ := json.Marshal(filter)
 	req, _ := http.NewRequestWithContext(ctx, "POST", fmt.Sprintf("%s/collections/%s/points/delete", q.baseURL, q.collection), bytes.NewBuffer(body))
 	req.Header.Set("Content-Type", "application/json")
+	if q.apiKey != "" {
+		req.Header.Set("api-key", fmt.Sprintf("%s", q.apiKey))
+	}
 
 	resp, err := q.httpClient.Do(req)
 	if err != nil {
@@ -159,7 +173,7 @@ func (q *QdrantVectorDB) Delete(ctx context.Context, docID string) error {
 }
 
 func (q *QdrantVectorDB) Health(ctx context.Context) (map[string]interface{}, error) {
-	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s/health", q.baseURL), nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", fmt.Sprintf("%s", q.baseURL), nil)
 	resp, err := q.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("qdrant health check failed: %w", err)
@@ -227,13 +241,17 @@ type ChromaVectorDB struct {
 	baseURL    string
 	collection string
 	httpClient *http.Client
+	apiKey     string
+	batchSize  int
 }
 
-func NewChromaVectorDB(url, collection string) *ChromaVectorDB {
+func NewChromaVectorDB(url, collection string, apiKey string, batchSize int) *ChromaVectorDB {
 	return &ChromaVectorDB{
 		baseURL:    url,
 		collection: collection,
 		httpClient: &http.Client{Timeout: 30 * time.Second},
+		apiKey:     apiKey,
+		batchSize:  batchSize,
 	}
 }
 

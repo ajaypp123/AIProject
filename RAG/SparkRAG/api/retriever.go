@@ -22,15 +22,18 @@ func NewRetriever(vectorDB VectorDB, embedding EmbeddingProvider, config Retriev
 	}
 }
 
-func (r *Retriever) Retrieve(ctx context.Context, query string, filters map[string]interface{}) ([]SearchResult, error) {
+func (r *Retriever) Retrieve(ctx context.Context, query string, filters map[string]interface{}, topK int, strategy string) ([]SearchResult, error) {
 	embedding, err := r.embedding.Embed(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to embed query: %w", err)
 	}
 
-	topK := r.config.TopK
 	if topK == 0 {
-		topK = 5
+		topK = r.config.TopK
+	}
+
+	if strategy == "" {
+		strategy = r.config.Strategy
 	}
 
 	results, err := r.vectorDB.Search(ctx, embedding, topK*2, filters)

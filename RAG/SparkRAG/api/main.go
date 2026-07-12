@@ -61,10 +61,12 @@ func main() {
 	var vectorDB VectorDB
 	switch cfg.VectorDB.Provider {
 	case "qdrant":
-		vectorDB = NewQdrantVectorDB(cfg.VectorDB.URL, cfg.VectorDB.Collection)
+		vectorDB = NewQdrantVectorDB(cfg.VectorDB.URL, cfg.VectorDB.Collection,
+			cfg.VectorDB.APIKey, cfg.VectorDB.BatchSize)
 		logger.Info("Using Qdrant vector database", zap.String("url", cfg.VectorDB.URL))
 	case "chroma":
-		vectorDB = NewChromaVectorDB(cfg.VectorDB.URL, cfg.VectorDB.Collection)
+		vectorDB = NewChromaVectorDB(cfg.VectorDB.URL, cfg.VectorDB.Collection,
+			cfg.VectorDB.APIKey, cfg.VectorDB.BatchSize)
 		logger.Info("Using Chroma vector database", zap.String("url", cfg.VectorDB.URL))
 	default:
 		logger.Fatal("unsupported vectordb provider", zap.String("provider", cfg.VectorDB.Provider))
@@ -127,7 +129,6 @@ func main() {
 	router.Post("/api/chat", handler.Chat)
 	router.Get("/api/chat/stream", handler.ChatStream)
 	router.Post("/api/search", handler.Search)
-	router.Post("/api/ingest", handler.Ingest)
 	router.Post("/api/delete", handler.Delete)
 	router.Get("/api/documents", handler.Documents)
 	router.Get("/api/providers", handler.Providers)

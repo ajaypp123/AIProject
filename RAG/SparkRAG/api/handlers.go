@@ -50,7 +50,7 @@ func (h *Handler) Chat(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	results, err := h.retriever.Retrieve(ctx, req.Message, req.Filters)
+	results, err := h.retriever.Retrieve(ctx, req.Message, req.Filters, req.TopK, req.Strategy)
 	if err != nil {
 		h.logger.Error("retrieval failed", zap.Error(err))
 		h.writeError(w, http.StatusInternalServerError, "RETRIEVAL_ERROR", err.Error())
@@ -108,7 +108,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	results, err := h.retriever.Retrieve(ctx, req.Query, req.Filters)
+	results, err := h.retriever.Retrieve(ctx, req.Query, req.Filters, req.TopK, req.Strategy)
 	if err != nil {
 		h.logger.Error("search failed", zap.Error(err))
 		h.writeError(w, http.StatusInternalServerError, "SEARCH_ERROR", err.Error())
@@ -123,31 +123,6 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(searchResp)
-}
-
-func (h *Handler) Ingest(w http.ResponseWriter, r *http.Request) {
-	var req IngestRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeError(w, http.StatusBadRequest, "INVALID_REQUEST", err.Error())
-		return
-	}
-
-	if req.DocumentPath == "" {
-		h.writeError(w, http.StatusBadRequest, "EMPTY_PATH", "document_path is required")
-		return
-	}
-
-	h.logger.Info("ingestion requested", zap.String("path", req.DocumentPath))
-
-	resp := IngestResponse{
-		DocumentID:  uuid.New().String(),
-		ChunksAdded: 0,
-		Success:     true,
-		Message:     "Document ingestion queued. Processing in background.",
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
@@ -298,7 +273,7 @@ func (h *Handler) ChatStream(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Minute)
 	defer cancel()
 
-	results, err := h.retriever.Retrieve(ctx, req.Message, req.Filters)
+	results, err := h.retriever.Retrieve(ctx, req.Message, req.Filters, req.TopK, req.Strategy)
 	if err != nil {
 		fmt.Fprintf(w, "data: {\"error\": \"Retrieval failed\"}\n\n")
 		return
