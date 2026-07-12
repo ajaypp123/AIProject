@@ -38,6 +38,7 @@ logs/
 
 # Docker
 .docker
+*_initalized
 
 # Data
 data/*/
@@ -51,3 +52,11 @@ data/*/
 # Testing
 coverage/
 *.prof
+
+# Go
+bin/
+vendor/
+
+# Node
+package-lock.json
+node_modules/

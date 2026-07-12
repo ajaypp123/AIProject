@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	configFile = flag.String("config", "config.yaml", "Path to configuration file")
+	configFile = flag.String("config", "", "Path to configuration file")
 	port       = flag.Int("port", 0, "Port to listen on (overrides config)")
 	version    = "1.0.0"
 )
@@ -24,19 +24,19 @@ var (
 func main() {
 	flag.Parse()
 
-	cfg, err := LoadConfig(*configFile)
-	if err != nil && *configFile != "config.yaml" {
-		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
-		os.Exit(1)
+	if *configFile == "" {
+		// Check env RAG_API_CFG_FILE
+		if envConfigFile := os.Getenv("RAG_API_CFG_FILE"); envConfigFile != "" {
+			*configFile = envConfigFile
+		} else {
+			*configFile = "config.yaml"
+		}
 	}
 
-	if cfg == nil {
-		var err error
-		cfg, err = LoadConfig("")
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error loading default config: %v\n", err)
-			os.Exit(1)
-		}
+	cfg, err := LoadConfig(*configFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error loading config: %v\n", err)
+		os.Exit(1)
 	}
 
 	if *port > 0 {

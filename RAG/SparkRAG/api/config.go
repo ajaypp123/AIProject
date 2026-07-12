@@ -17,13 +17,15 @@ type VectorDBConfig struct {
 	URL        string `yaml:"url" envconfig:"VECTORDB_URL"`
 	APIKey     string `yaml:"api_key" envconfig:"VECTORDB_API_KEY"`
 	Collection string `yaml:"collection" envconfig:"VECTORDB_COLLECTION"`
+	BatchSize  int    `yaml:"batch_size" envconfig:"VECTORDB_BATCH_SIZE"`
 }
 
 type EmbeddingConfig struct {
-	Provider string `yaml:"provider" envconfig:"EMBEDDING_PROVIDER"`
-	Model    string `yaml:"model" envconfig:"EMBEDDING_MODEL"`
-	APIKey   string `yaml:"api_key" envconfig:"EMBEDDING_API_KEY"`
-	URL      string `yaml:"url" envconfig:"EMBEDDING_URL"`
+	Provider  string `yaml:"provider" envconfig:"EMBEDDING_PROVIDER"`
+	Model     string `yaml:"model" envconfig:"EMBEDDING_MODEL"`
+	APIKey    string `yaml:"api_key" envconfig:"EMBEDDING_API_KEY"`
+	URL       string `yaml:"url" envconfig:"EMBEDDING_URL"`
+	BatchSize int    `yaml:"batch_size" envconfig:"EMBEDDING_BATCH_SIZE"`
 }
 
 type LLMConfig struct {
@@ -55,7 +57,7 @@ type Config struct {
 	VectorDB  VectorDBConfig  `yaml:"vectordb"`
 	Embedding EmbeddingConfig `yaml:"embedding"`
 	LLM       LLMConfig       `yaml:"llm"`
-	Retriever RetrieverConfig `yaml:"retriever"`
+	Retriever RetrieverConfig `yaml:"chunking"`
 	Logging   LoggingConfig   `yaml:"logging"`
 }
 

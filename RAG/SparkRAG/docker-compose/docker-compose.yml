@@ -13,6 +13,12 @@ services:
     volumes:
       - ./scripts:/scripts
       - qdrant-storage:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "ls", "/qdrant/storage"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 1m
     environment:
       # - QDRANT__SERVICE__API_KEY=b56c8c78-7cff-11f1-8f9c-00155dbf27d9
       - QDRANT__LOG_LEVEL=INFO
@@ -32,9 +38,15 @@ services:
     environment:
       OLLAMA_HOST: 0.0.0.0:11434
     restart: unless-stopped
-    entrypoint: ["/bin/sh", "/scripts/run_ollama.sh"]
+    entrypoint: ["/bin/sh", "/scripts/run_ollama.sh", "start"]
     networks:
       - spark-rag
+    healthcheck:
+      test: ["CMD", "/bin/sh", "/scripts/run_ollama.sh", "healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 3m
     deploy:
       resources:
         reservations:
@@ -52,6 +64,11 @@ services:
     environment:
       INGESTOR_CONFIG_FILE: /config/config.docker.yaml
       INGESTOR_OPERATION_MODE: "store"
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
     volumes:
       - ./config:/config:ro
       - ingestor:/data/ingestor:rw
@@ -76,11 +93,11 @@ services:
       - ./config:/config:ro
       - ingestor:/data/ingestor:rw
       - ./scripts:/scripts
-    #depends_on:
-    #  qdrant:
-    #    condition: service_healthy
-    #  ollama:
-    #    condition: service_healthy
+    depends_on:
+      qdrant:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
     networks:
       - spark-rag
     healthcheck:
@@ -88,6 +105,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 4m
 
   spark-rag-ui:
     image: spark-rag-ui:latest
@@ -108,6 +126,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 4m
 
 volumes:
   qdrant-storage:

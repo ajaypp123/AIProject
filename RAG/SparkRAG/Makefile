@@ -2,18 +2,18 @@
 
 # help target to display available make targets
 help:
-	@echo "Spark RAG Platform - Available targets:"
-	@echo "  make init           			- Initialize project"
-	@echo "  make build          			- Build all components (ui, api, ingestor)"
-	@echo "  make run-app-locally			- Run all component locally (development)"
-	@echo "  make test           			- Run all component test cases"
-	@echo "  make lint           			- Run linters"
-	@echo "  make fmt            			- Format code"
-	@echo "  make docker-build   			- Build Docker images for all components"
-	@echo "  make run-docker-services     		- Start docker-compose services"
-	@echo "  make stop-docker-services   		- Stop docker-compose services"
-	@echo "  make show-component-logs   		- View docker-compose logs for all services"
-	@echo "  make clean          			- Clean build artifacts and stop running services"
+	@echo "Spark RAG Platform - It include components - injestor, api-server, ui, vectordb, embedding-models, llm. Available targets:"
+	@echo "  make init                      - Initialize project"
+	@echo "  make build                     - Build all components (ui, api, ingestor)"
+	@echo "  make run-app-locally           - Run all component locally (development)"
+	@echo "  make test                      - Run all component test cases"
+	@echo "  make lint                      - Run linters"
+	@echo "  make fmt                       - Format code"
+	@echo "  make docker-build              - Build Docker images for all components"
+	@echo "  make run-docker-services       - Start docker-compose services"
+	@echo "  make stop-docker-services      - Stop docker-compose services"
+	@echo "  make show-component-logs       - View docker-compose logs for all services"
+	@echo "  make clean                     - Clean build artifacts and stop running services"
 
 # init application, create volumes, install dependencies locally
 init:
@@ -114,6 +114,7 @@ docker-build-spark-rag-ui:
 	docker build -f Dockerfile.ui -t spark-rag-ui:latest .
 	@echo "All Docker images built successfully!"
 
+# Run all component and build rag platform
 run-docker-services:
 	@echo "Starting Docker Compose..."
 	cd ./docker-compose && docker compose -f ./docker-compose.yml up -d
@@ -123,15 +124,18 @@ run-docker-services:
 	@echo "API: http://localhost:8080"
 	@echo "================================"
 
+# Stop all running services and remove containers, networks, and volumes
 stop-docker-services:
 	@echo "Stopping Docker Compose..."
 	cd ./docker-compose && docker compose -f ./docker-compose.yml down -v
 	@echo "Stopped all services."
 
+# Show logs for all running services in Docker Compose
 show-component-logs:
 	cd ./docker-compose && docker compose -f ./docker-compose.yml logs -f
 
-clean:
+# Clean build artifacts and stop running services
+clean: stop-docker-services clean-docker-images
 	@echo "Cleaning build artifacts..."
 	rm -rf ui/build ui/node_modules ui/package-lock.json
 	rm -rf api/.env.local api/vendor/ api/bin/spark-rag-api
@@ -139,4 +143,10 @@ clean:
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	pkill -f spark-rag-api
 	fuser -k 3000/tcp
+	rm -rf /data/*
 	@echo "Clean complete!"
+
+clean-docker-images:
+	@echo "Cleaning Docker images..."
+	docker rmi spark-rag-api:latest spark-rag-ingestor:latest spark-rag-ui:latest || true
+	@echo "Docker images cleaned!"

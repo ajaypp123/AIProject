@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+
+  spark-rag-embedding-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.embedding-service
+    container_name: spark-rag-embedding-service
+    ports:
+      - "8001:8000"
+    environment:
+      MODEL_NAME: sentence-transformers/all-MiniLM-L6-v2
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - spark-rag
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+
+volumes:
+  ingestor-checkpoint:
+    driver: local
+
+networks:
+  spark-rag:
+    driver: bridge
+
+x-chroma-service: &chroma-service
+  image: chromadb/chroma:latest
+  container_name: spark-rag-chroma
+  ports:
+    - "8000:8000"
+  volumes:
+    - chroma-storage:/chroma/chroma
+  environment:
+    IS_PERSISTENT: "true"
+    PERSIST_DIRECTORY: /chroma/chroma
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  networks:
+    - spark-rag
+
+x-chroma-volume:
+  chroma-storage:
+    driver: local
