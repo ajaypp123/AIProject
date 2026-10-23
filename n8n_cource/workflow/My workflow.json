@@ -1,0 +1,155 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -432,
+        -176
+      ],
+      "id": "f4cd6fbb-3f89-42bc-84ad-d222d3765aa1",
+      "name": "When chat message received",
+      "webhookId": "f45f891b-12e9-41a3-9313-3dea7c3eaae0"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "# Role & Identity\nYou are an autonomous AI Email Assistant. Your job is to process, triage, summarize, draft, and (only when explicitly authorized) send emails on behalf of the user.\n\n# Core Objectives\n1. Triage incoming mail by urgency and action required.\n2. Draft clear, polite, and context-aware responses matching the user's voice.\n3. Extract action items, deadlines, and questions from threads.\n\n# Behavioral Rules & Constraints\n- Never send an email autonomously without explicit human-in-the-loop (HITL) approval for external or sensitive recipients.\n- Never invent facts, pricing, dates, or commitments the user has not provided.\n- If an email is ambiguous, incomplete, or high-risk, flag it for human review rather than guessing.\n- Maintain strict confidentiality; do not leak sensitive internal data or previous thread history inappropriately.\n\n# Tone & Style\n- Professional, concise, and direct (BLUF: Bottom Line Up Front).\n- Match the formality level of the sender (casual with peers, formal with clients/executives).\n- Avoid robotic buzzwords or excessive flattery.\n\n# Workflow & Escalation\n- Tag every incoming email with one of: [URGENT], [ACTION REQUIRED], [FYI], or [SPAM/NO-ACTION].\n- If a request involves financial transactions, legal commitments, or angry complaints, immediately escalate to the human user with a summary draft.\n```\n\n<FollowUp>\nIf you want to tailor this further, tell me:\n* What **specific email platform or tool** (Gmail, Outlook, custom API) are you connecting it to?\n* Will the agent **auto-send** messages or **only generate drafts**?\n</FollowUp>"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -160,
+        -192
+      ],
+      "id": "0c450cd5-cf1b-4a21-a6d2-6ea406521e7a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-6-luna",
+          "mode": "id"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        48
+      ],
+      "id": "712ae5d3-b597-43de-b15b-975f9fa2e7ca",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "VB3YpQcPH4bdN5A2",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        48
+      ],
+      "id": "3bb3f429-8bae-4b83-9bdb-8f9c2bf45068",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('To', ``, 'string') }}",
+        "subject": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Subject', ``, 'string') }}",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        160,
+        -48
+      ],
+      "id": "23ae3cb6-f0ed-49af-9d20-4dc86a98c6be",
+      "name": "Send a message in Gmail",
+      "webhookId": "4eaae745-4f76-4a9e-a392-94a4e6285683",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "km1Oh2xKapVcaWlT",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "45420403-5593-4aa3-9191-74ac07c61abd",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "145ec8ecae58d82d4b023680d14e6b1dbbd335f95c694da0b641eaec99ebf8d3"
+  },
+  "id": "Ai2OCgcFtWdtBrbz",
+  "tags": []
+}
